@@ -85,54 +85,11 @@ def multiple_selfies_to_hot(selfies_list, largest_molecule_len, alphabet):
     return np.array(hot_list)
 
 
-def edit_hot(hot, upper_bound):
+def add_noise_to_hot(hot, upper_bound): #TODO is there a way to optimize the encodings (e.g., shorten them)
     """
     Replaces all zeroes with a random float in the range [0,upper_bound]
     """
-    newhot=hot+upper_bound*rand(hot.shape)
-    newhot[newhot>1]=1
-    return newhot
-
-
-def hot_to_indices(hot):
-    """
-    Convert an element of one-hot encoding to indices
-    """
-    hot = hot.clone().detach()
-    _,max_index=hot.max(1)
-    return max_index.data.cpu().numpy().tolist()
-
-
-def multiple_hot_to_indices(hots):
-    """
-    Convert one-hot encoding to list of indices
-    """
-    gathered_ints=[]
-    for hot in hots:
-        gathered_ints.append(hot_to_indices(hot))
-    return gathered_ints
-
-
-def indices_to_selfies(hot, alphabet):
-    """
-    Convert list of indices to selfies string
-    """
-    int_to_symbol = dict((i, c) for i, c in enumerate(alphabet))
-
-    selfie = ''
-    for num in hot:
-        selfie += int_to_symbol[num]
-    return selfie
-
-
-def multiple_indices_to_selfies(hots, alphabet):
-    """
-    Convert multiple lists of indices to selfies string
-    """
-    selfies_list = []
-    for hot in hots:
-        selfies_list.append(indices_to_selfies(hot, alphabet))
-    return np.array(selfies_list)
+    return hot+upper_bound*rand(hot.shape) 
 
 
 def draw_mol_to_file(mol_lst, directory):
@@ -157,13 +114,12 @@ def LC50_from_molecules():
     return LC50s
 
 
-def LC50_fromm_single_molecule(smiles):
+def LC50_from_single_molecule(smiles): #not used but maybe will be useful
     """
     Extract the LC50 value for a single molecule from the CSV file
     """
     # Read the CSV file
     data = pd.read_csv('datasets/LC50_filtered.csv')
-    
     # Match the SMILES representation with the LC50 value
     LC50 = data[data['Filtered SMILES'] == smiles]['Filtered LC50[-LOG(mol/L)]'].values[0]
     

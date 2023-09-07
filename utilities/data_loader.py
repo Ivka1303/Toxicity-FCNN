@@ -119,8 +119,7 @@ def get_selfie_and_smiles_info(smiles_list, filename):
     of tokens required to build a string representation of each molecule."""
 
     largest_smiles_len, largest_selfies_len = get_largest_string_len(
-        smiles_list,
-        filename)
+        smiles_list, filename)
     smiles_alphabet, selfies_alphabet = get_string_alphabet(smiles_list,
                                                             filename)
     return selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len
@@ -173,8 +172,7 @@ def preprocess(num_mol, file_name):
     RDLogger.DisableLog('rdApp.*')
     logging.basicConfig(level=logging.INFO) 
     RDLogger.DisableLog('rdApp.error.explicitValence')
-    prop_vals = mol_utils.LC50_from_molecules()  # Use LC50_from_molecules instead of logP_from_molecule
-
+    prop_vals = mol_utils.LC50_from_molecules()  
     prop_vals = np.array(prop_vals)
     print('Finished loading LC50 of all molecules.\n')
 

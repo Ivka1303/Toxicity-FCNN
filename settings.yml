@@ -8,7 +8,7 @@ data_preprocess:
   smiles_file: datasets/SelectedSMILES.txt
 
 data:
-  num_train: 100
+  num_train: 1000
   
 model:
   num_of_neurons_layer1: 500

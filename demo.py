@@ -21,7 +21,7 @@ from random import shuffle
 from torch import nn
 
 from utilities.utils import change_str, make_dir, use_gpu
-from utilities.mol_utils import edit_hot, lst_of_logP, multiple_hot_to_indices
+from utilities.mol_utils import add_noise_to_hot, lst_of_logP, multiple_hot_to_indices
 
 
 class fc_model(nn.Module):
@@ -76,7 +76,7 @@ def train_model(parent_dir, directory, args, model,
                                         data_test.shape[1]*data_test.shape[2]))
 
     # add random noise to one-hot encoding
-    reshaped_data_test_edit = edit_hot(reshaped_data_test, upperbound)
+    reshaped_data_test_edit = add_noise_to_hot(reshaped_data_test, upperbound)
 
     data_train_prop=torch.tensor(data_train_prop,
                                  dtype=torch.float, device=args.device)
@@ -95,7 +95,7 @@ def train_model(parent_dir, directory, args, model,
         shuffle(x)
         reshaped_data_train  = reshaped_data_train[x]
         data_train_prop = data_train_prop[x]
-        reshaped_data_train_edit = edit_hot(reshaped_data_train,
+        reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
                                             upper_bound=upperbound)
 
         for batch_iteration in range(int(len(reshaped_data_train_edit)/batch_size)):
@@ -234,7 +234,7 @@ def test_model(directory, args, model, data, data_prop, upperbound):
 
     # add random noise to one-hot encoding with specified upperbound
     #DO YOU REALLY NEED THIS NOISE?
-    test_data_edit = edit_hot(test_data, upperbound)
+    test_data_edit = add_noise_to_hot(test_data, upperbound)
 
     # feedforward step
     trained_data_prop = model(test_data_edit)
@@ -263,7 +263,7 @@ def dream_model(model, prop, largest_molecule_len, alphabet, upperbound,
                                     data_train.shape[1] * data_train.shape[2])
 
     # add random noise to one-hot encoding
-    data_train_edit = edit_hot(data_train, upper_bound=upperbound)
+    data_train_edit = add_noise_to_hot(data_train, upper_bound=upperbound)
     data_train_var=torch.autograd.Variable(data_train_edit, requires_grad=True)
     data_train_prop=torch.tensor([prop], dtype=torch.float)
 

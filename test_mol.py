@@ -14,7 +14,7 @@ from random import shuffle
 from utilities import data_loader
 from utilities import plot_utils
 
-from utilities.mol_utils import multiple_selfies_to_hot, edit_hot, LC50_from_molecules, multiple_hot_to_indices
+from utilities.mol_utils import add_noise_to_hot
 from utilities.utils import make_dir, change_str, use_gpu
 
 
@@ -44,12 +44,12 @@ class fc_model(nn.Module):
         x - data
         """
         # Go down to dim-4
-        h1 = self.encode_4d(x)
+        h1 = self.encode_4d(x) #TODO why 4??? 
 
         return h1
 
 
-def train_model(name, directory, args, model,
+def train_model(name, model, directory, args,
                 upperbound, data_train, data_train_prop, data_test,
                 data_test_prop, lr_enc, num_epochs, batch_size):
     """Train the model"""
@@ -68,7 +68,7 @@ def train_model(name, directory, args, model,
                                         data_test.shape[1]*data_test.shape[2]))
 
     # add random noise to one-hot encoding
-    reshaped_data_test_edit = edit_hot(reshaped_data_test, upperbound)
+    reshaped_data_test_edit = add_noise_to_hot(reshaped_data_test, upperbound)
 
     data_train_prop=torch.tensor(data_train_prop,
                                  dtype=torch.float, device=args.device)
@@ -87,7 +87,7 @@ def train_model(name, directory, args, model,
         shuffle(x)
         reshaped_data_train  = reshaped_data_train[x]
         data_train_prop = data_train_prop[x]
-        reshaped_data_train_edit = edit_hot(reshaped_data_train,
+        reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
                                             upper_bound=upperbound)
 
         for batch_iteration in range(int(len(reshaped_data_train_edit)/batch_size)):
@@ -141,13 +141,14 @@ def train_model(name, directory, args, model,
         train_loss.append(real_loss_train_num)
 
         if real_loss_test_num < min_loss:
+            # min_loss = real_loss_test_num
             min_loss = real_loss_test_num
             torch.save(model.state_dict(), name)
-
             print('Test loss decrease, model saved to file')
+            break #remove break and uncomment line 144 if you want the most accurate from all epochs
 
-        # stopping criterion: compare the running test loss averages over 90 epochs
-        if len(test_loss)>=100:
+        # stopping criterion: compare the running test loss averages over 90 epochs #TODO do you need this?
+        if len(test_loss)>=1: #STOPPED HERE
             avg = sum(test_loss[len(test_loss)-90:len(test_loss)])
             avg_test_loss.append(avg)
 
@@ -183,21 +184,19 @@ def load_model(file_name, args, len_max_molec1Hot, model_parameters):
 def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
           data_train, prop_vals_train, data_test, prop_vals_test, lr_train,
           num_epochs, batch_size):
-    
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    name = change_str(directory)+f'/model-{timestamp}.pt'
-    print("Model name", name)
-    model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
-    model.train()
-
     print('len(data_train): ',len(data_train))
     print("start training")
 
-    train_model(name, directory, args, model, upperbound,
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    name = change_str(directory)+f'/model-{timestamp}.pt'
+
+    model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
+    model.train()
+
+    train_model(name, model, directory, args, upperbound,
                 data_train, prop_vals_train, data_test, prop_vals_test,
                 lr_train, num_epochs, batch_size)
 
-    model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
     model.load_state_dict(torch.load(name))
     model.eval()
     print('Testing model...')
@@ -217,7 +216,7 @@ def test_model(directory, args, model, data, data_prop, upperbound):
                                   test_data.shape[1] * test_data.shape[2])
 
     # add random noise to one-hot encoding with specified upperbound
-    test_data_edit = edit_hot(test_data, upperbound)
+    test_data_edit = add_noise_to_hot(test_data, upperbound)
 
     # feedforward step
     trained_data_prop = model(test_data_edit)
@@ -233,35 +232,31 @@ if __name__ == '__main__':
     print('Start reading data file...')
     settings=yaml.safe_load(open("settings.yml","r"))
     # test = settings['test_model'] not used? 
-    mols = settings['mols']
-    file_name = settings['data_preprocess']['smiles_file']
-    lr_train=settings['lr_train']
-    lr_train=float(lr_train)
-    batch_size=settings['training']['batch_size']
-    num_epochs = settings['training']['num_epochs']
-    model_parameters = settings['model']
-    
-    training_parameters = settings['training']
-    training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
-                                             training_parameters['batch_size'])
+
     data_parameters = settings['data']
     data_parameters_str = str(data_parameters['num_train'])
 
+    training_parameters = settings['training']
+    training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
+                                             training_parameters['batch_size'])
+
     upperbound_tr = settings['upperbound_tr']
 
-    num_train = settings['data']['num_train']
-
-    num_mol = num_train
+    lr_train=settings['lr_train']
+    lr_train=float(lr_train)
 
     directory = change_str('results/{}_{}/{}/{}' \
                            .format(data_parameters_str,
                                    training_parameters_str,
                                    upperbound_tr,
                                    lr_train))
-    print("Before training", directory)
+    
     make_dir(directory)
 
-    args = use_gpu()
+    num_train = settings['data']['num_train']
+
+    num_mol = num_train
+    file_name = settings['data_preprocess']['smiles_file']
 
     # data-preprocessing
     data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
@@ -269,8 +264,14 @@ if __name__ == '__main__':
 
     data_train, data_test, prop_vals_train, prop_vals_test \
         = data_loader.split_train_test(data, prop_vals, num_train, 0.85)
+    
+    print(data_train[1])
+    
+    args = use_gpu()
+    model_parameters = settings['model']
+    num_epochs = settings['training']['num_epochs']
+    batch_size=settings['training']['batch_size']
 
-    # also need to test if the model is fine
     model = train(directory, args, model_parameters, len_max_molec1Hot,
                     upperbound_tr, data_train, prop_vals_train, data_test,
                     prop_vals_test, lr_train, num_epochs, batch_size)
