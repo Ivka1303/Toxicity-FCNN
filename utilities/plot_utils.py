@@ -12,7 +12,7 @@ def running_avg_test_loss(avg_test_loss, directory):
     plt.plot(avg_test_loss)
     plt.xlabel('Epochs')
     plt.ylabel('Running average test loss')
-    name = name = directory + '/runningavg_testloss'
+    name = directory + '/runningavg_testloss'
     plt.savefig(name)
     closefig()
 

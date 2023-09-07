@@ -159,7 +159,7 @@ def read_smiles(filename):
 
 def preprocess(num_mol, file_name):
     """Takes a random subset of num_mol SMILES from a given dataset;
-    converts each SMILES to the SELFIES equivalent and one-hot encoding;
+    converts each SMILES to the SELFIES and creates one-hot encoding;
     encodes other string information."""
 
     smiles_list = read_smiles(file_name)
@@ -201,6 +201,7 @@ def preprocess(num_mol, file_name):
 def split_train_test(data, prop_vals, num_mol, frac_train):
     """Split data into training and test data. frac_train is the fraction of
     data used for training. 1-frac_train is the fraction used for testing."""
+    # FINE
 
     train_test_size = [frac_train, 1 - frac_train]
     data = data[:num_mol]

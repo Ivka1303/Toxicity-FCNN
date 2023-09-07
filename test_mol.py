@@ -23,7 +23,7 @@ class fc_model(nn.Module):
     def __init__(self, len_max_molec1Hot, num_of_neurons_layer1,
                  num_of_neurons_layer2, num_of_neurons_layer3):
         """
-        Fully Connected layers for the RNN.
+        Fully Connected layers of the RNN.
         """
         super(fc_model, self).__init__()
 
@@ -40,7 +40,8 @@ class fc_model(nn.Module):
 
     def forward(self, x):
         """
-        Pass through the model
+        Pass through the model (is implicictely called when model is created)
+        x - data
         """
         # Go down to dim-4
         h1 = self.encode_4d(x)
@@ -48,7 +49,7 @@ class fc_model(nn.Module):
         return h1
 
 
-def train_model(parent_dir, directory, args, model,
+def train_model(name, directory, args, model,
                 upperbound, data_train, data_train_prop, data_test,
                 data_test_prop, lr_enc, num_epochs, batch_size):
     """Train the model"""
@@ -77,7 +78,7 @@ def train_model(parent_dir, directory, args, model,
     test_loss=[]
     train_loss=[]
     avg_test_loss=[]
-    min_loss = 1
+    min_loss = 4
 
     for epoch in range(num_epochs):
 
@@ -141,7 +142,7 @@ def train_model(parent_dir, directory, args, model,
 
         if real_loss_test_num < min_loss:
             min_loss = real_loss_test_num
-            torch.save(model.state_dict(), parent_dir)
+            torch.save(model.state_dict(), name)
 
             print('Test loss decrease, model saved to file')
 
@@ -185,6 +186,7 @@ def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
     
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     name = change_str(directory)+f'/model-{timestamp}.pt'
+    print("Model name", name)
     model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
     model.train()
 
@@ -205,7 +207,7 @@ def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
 
 
 def test_model(directory, args, model, data, data_prop, upperbound):
-    """Test model to ensure it is sufficiently trained before dreaming."""
+    """Test model to ensure it is sufficiently trained"""
 
     test_data = torch.tensor(data, dtype=torch.float, device=args.device)
     computed_data_prop = torch.tensor(data_prop, device=args.device)
@@ -230,42 +232,33 @@ if __name__ == '__main__':
     # import hyperparameter and training settings from yaml
     print('Start reading data file...')
     settings=yaml.safe_load(open("settings.yml","r"))
-    test = settings['test_model']
+    # test = settings['test_model'] not used? 
     mols = settings['mols']
     file_name = settings['data_preprocess']['smiles_file']
     lr_train=settings['lr_train']
     lr_train=float(lr_train)
-    lr_dream=settings['lr_dream']
-    lr_dream=float(lr_dream)
     batch_size=settings['training']['batch_size']
     num_epochs = settings['training']['num_epochs']
     model_parameters = settings['model']
-    dreaming_parameters = settings['dreaming']
-
+    
     training_parameters = settings['training']
     training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
                                              training_parameters['batch_size'])
     data_parameters = settings['data']
-    data_parameters_str = '{}_{}'.format(data_parameters['num_train'],
-                                         data_parameters['num_dream'])
+    data_parameters_str = str(data_parameters['num_train'])
 
     upperbound_tr = settings['upperbound_tr']
-    upperbound_dr = settings['upperbound_dr']
-    prop=settings['property_value']
 
     num_train = settings['data']['num_train']
-    num_dream = settings['data']['num_dream']
 
     num_mol = num_train
 
-    if num_dream > num_train:
-        num_mol = num_dream
-
-    directory = change_str('dream_results/{}_{}/{}/{}' \
+    directory = change_str('results/{}_{}/{}/{}' \
                            .format(data_parameters_str,
                                    training_parameters_str,
                                    upperbound_tr,
                                    lr_train))
+    print("Before training", directory)
     make_dir(directory)
 
     args = use_gpu()
@@ -281,13 +274,3 @@ if __name__ == '__main__':
     model = train(directory, args, model_parameters, len_max_molec1Hot,
                     upperbound_tr, data_train, prop_vals_train, data_test,
                     prop_vals_test, lr_train, num_epochs, batch_size)
-
-    # convert from SMILES to SELFIES
-    selfies_lst, _ = data_loader.get_selfie_and_smiles_encodings(mols)
-
-    # convert from SELFIES to one-hot encoding
-    mols = multiple_selfies_to_hot(selfies_lst,
-                                   largest_molecule_len,
-                                   alphabet)
-    mols = torch.tensor(mols, dtype=torch.float, device=args.device)
-    

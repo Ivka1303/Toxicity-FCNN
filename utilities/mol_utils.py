@@ -89,7 +89,6 @@ def edit_hot(hot, upper_bound):
     """
     Replaces all zeroes with a random float in the range [0,upper_bound]
     """
-    #t1=time.clock()
     newhot=hot+upper_bound*rand(hot.shape)
     newhot[newhot>1]=1
     return newhot
@@ -158,7 +157,7 @@ def LC50_from_molecules():
     return LC50s
 
 
-def LC50_from_single_molecule(smiles):
+def LC50_fromm_single_molecule(smiles):
     """
     Extract the LC50 value for a single molecule from the CSV file
     """

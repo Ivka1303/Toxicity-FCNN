@@ -22,6 +22,7 @@ def change_str(name):
             changed += name[i]
     return changed
 
+
 def make_dir(name):
     """Create a new directory."""
 
@@ -33,6 +34,7 @@ def closefig():
     """Clears and closes current instance of a plot."""
     plt.clf()
     plt.close()
+
 
 def use_gpu():
     """Connects training to gpu resources via args."""
