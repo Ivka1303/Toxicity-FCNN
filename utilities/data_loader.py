@@ -199,8 +199,6 @@ def preprocess(num_mol, file_name):
 def split_train_test(data, prop_vals, num_mol, frac_train):
     """Split data into training and test data. frac_train is the fraction of
     data used for training. 1-frac_train is the fraction used for testing."""
-    # FINE
-
     train_test_size = [frac_train, 1 - frac_train]
     data = data[:num_mol]
     prop_vals = prop_vals[:num_mol]

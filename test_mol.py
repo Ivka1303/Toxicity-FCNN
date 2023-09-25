@@ -50,8 +50,8 @@ class fc_model(nn.Module):
 
 
 def train_model(name, model, directory, args,
-                upperbound, data_train, data_train_prop, data_test,
-                data_test_prop, lr_enc, num_epochs, batch_size):
+                upperbound, data_train, prop_vals_train, data_test,
+                prop_vals_test, lr_enc, num_epochs, batch_size, run_number):
     """Train the model"""
 
     # initialize an instance of the model
@@ -70,15 +70,14 @@ def train_model(name, model, directory, args,
     # add random noise to one-hot encoding
     reshaped_data_test_edit = add_noise_to_hot(reshaped_data_test, upperbound)
 
-    data_train_prop=torch.tensor(data_train_prop,
+    prop_vals_train=torch.tensor(prop_vals_train,
                                  dtype=torch.float, device=args.device)
-    data_test_prop=torch.tensor(data_test_prop,
+    prop_vals_test=torch.tensor(prop_vals_test,
                                 dtype=torch.float, device=args.device)
 
     test_loss=[]
     train_loss=[]
-    avg_test_loss=[]
-    min_loss = 4
+    min_loss = float('inf')
 
     for epoch in range(num_epochs):
 
@@ -86,7 +85,7 @@ def train_model(name, model, directory, args,
         x = [i for i in range(len(reshaped_data_train))]  # random shuffle input
         shuffle(x)
         reshaped_data_train  = reshaped_data_train[x]
-        data_train_prop = data_train_prop[x]
+        prop_vals_train = prop_vals_train[x]
         reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
                                             upper_bound=upperbound)
 
@@ -98,9 +97,8 @@ def train_model(name, model, directory, args,
             # slice data into batches
             curr_mol=reshaped_data_train_edit[current_smiles_start : \
                                               current_smiles_stop]
-            curr_prop=data_train_prop[current_smiles_start : \
+            curr_prop=prop_vals_train[current_smiles_start : \
                                       current_smiles_stop]
-
             # feedforward step
             calc_properties = model(curr_mol)
             calc_properties=torch.reshape(calc_properties,[len(calc_properties)])
@@ -121,7 +119,7 @@ def train_model(name, model, directory, args,
         calc_train_set_property=torch.reshape(calc_train_set_property,
                                               [len(calc_train_set_property)])
         criterion = nn.MSELoss()
-        real_loss_train=criterion(calc_train_set_property, data_train_prop)
+        real_loss_train=criterion(calc_train_set_property, prop_vals_train)
         real_loss_train_num=real_loss_train.detach().cpu().numpy()
 
         # calculate test set
@@ -129,7 +127,7 @@ def train_model(name, model, directory, args,
         criterion = nn.MSELoss()
         calc_test_set_property=torch.reshape(calc_test_set_property,
                                              [len(calc_test_set_property)])
-        real_loss_test=criterion(calc_test_set_property, data_test_prop)
+        real_loss_test=criterion(calc_test_set_property, prop_vals_test)
         real_loss_test_num=real_loss_test.detach().cpu().numpy()
 
 
@@ -141,36 +139,27 @@ def train_model(name, model, directory, args,
         train_loss.append(real_loss_train_num)
 
         if real_loss_test_num < min_loss:
-            # min_loss = real_loss_test_num
             min_loss = real_loss_test_num
-            torch.save(model.state_dict(), name)
-            print('Test loss decrease, model saved to file')
-            break #remove break and uncomment line 144 if you want the most accurate from all epochs
+            calc_train=calc_train_set_property.detach().cpu().numpy()
+            calc_test=calc_test_set_property.detach().cpu().numpy()
+            real_vals_prop_train=prop_vals_train.detach().cpu().numpy()
+            real_vals_prop_test=prop_vals_test.detach().cpu().numpy()
+            curr_best_model = model.state_dict()
 
-        # stopping criterion: compare the running test loss averages over 90 epochs #TODO do you need this?
-        if len(test_loss)>=1: #STOPPED HERE
-            avg = sum(test_loss[len(test_loss)-90:len(test_loss)])
-            avg_test_loss.append(avg)
-
-            print(avg_test_loss)
-
-            if len(avg_test_loss)>=50 and avg>avg_test_loss[len(avg_test_loss)-40]:
-                print('Train loss is increasing, stop training')
-
-                # plot training results
-                real_vals_prop_train=data_train_prop.detach().cpu().numpy()
-                real_vals_prop_test=data_test_prop.detach().cpu().numpy()
-
-                calc_train=calc_train_set_property.detach().cpu().numpy()
-                calc_test=calc_test_set_property.detach().cpu().numpy()
-
-                plot_utils.running_avg_test_loss(avg_test_loss, directory)
-                plot_utils.test_model_after_train(calc_train, real_vals_prop_train,
-                                                  calc_test,real_vals_prop_test,
-                                                  directory)
-                plot_utils.prediction_loss(train_loss, test_loss, directory)
-                break
-
+    plot_utils.prediction_loss(train_loss, test_loss, directory, run_number)
+    plot_utils.test_model_after_train(calc_train, real_vals_prop_train,
+                                            calc_test,real_vals_prop_test,
+                                            directory, run_number)  
+    plot_utils.scatter_residuals(calc_train, real_vals_prop_train,
+                                 calc_test, real_vals_prop_test,
+                                 directory, run_number)
+    plot_utils.plot_residuals_histogram(calc_train, real_vals_prop_train,
+                                        calc_test, real_vals_prop_test,
+                                        directory, run_number)
+    print('Start saving the model')
+    torch.save(curr_best_model, name)
+    print('Model saved')
+        
 
 def load_model(file_name, args, len_max_molec1Hot, model_parameters):
     """Load existing model state dict from file"""
@@ -184,54 +173,27 @@ def load_model(file_name, args, len_max_molec1Hot, model_parameters):
 def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
           data_train, prop_vals_train, data_test, prop_vals_test, lr_train,
           num_epochs, batch_size):
-    print('len(data_train): ',len(data_train))
     print("start training")
-
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    name = change_str(directory)+f'/model-{timestamp}.pt'
+    existing_files = os.listdir(directory)
+    run_number = sum(1 for file in existing_files if file.endswith('.pt')) + 1
+    name = change_str(directory)+f'/r{run_number}.pt'
 
     model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
     model.train()
 
     train_model(name, model, directory, args, upperbound,
                 data_train, prop_vals_train, data_test, prop_vals_test,
-                lr_train, num_epochs, batch_size)
+                lr_train, num_epochs, batch_size, run_number)
 
     model.load_state_dict(torch.load(name))
     model.eval()
-    print('Testing model...')
-    test_model(directory, args, model,
-                data_train, prop_vals_train, upperbound)
     return model
-
-
-def test_model(directory, args, model, data, data_prop, upperbound):
-    """Test model to ensure it is sufficiently trained"""
-
-    test_data = torch.tensor(data, dtype=torch.float, device=args.device)
-    computed_data_prop = torch.tensor(data_prop, device=args.device)
-
-    # reshape for efficient parallelization
-    test_data = test_data.reshape(test_data.shape[0],
-                                  test_data.shape[1] * test_data.shape[2])
-
-    # add random noise to one-hot encoding with specified upperbound
-    test_data_edit = add_noise_to_hot(test_data, upperbound)
-
-    # feedforward step
-    trained_data_prop = model(test_data_edit)
-    trained_data_prop = trained_data_prop.reshape(data.shape[0]).clone().detach().numpy()
-
-    # compare ground truth data to modelled data
-    plot_utils.test_model_before_dream(trained_data_prop, computed_data_prop,
-                                       directory)
 
 
 if __name__ == '__main__':
     # import hyperparameter and training settings from yaml
     print('Start reading data file...')
     settings=yaml.safe_load(open("settings.yml","r"))
-    # test = settings['test_model'] not used? 
 
     data_parameters = settings['data']
     data_parameters_str = str(data_parameters['num_train'])
@@ -240,16 +202,21 @@ if __name__ == '__main__':
     training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
                                              training_parameters['batch_size'])
 
+
+    model_parameters = settings['model']
+    model_parameters_str = "".join([str(n) for n in model_parameters.values()])
+
     upperbound_tr = settings['upperbound_tr']
 
     lr_train=settings['lr_train']
     lr_train=float(lr_train)
 
-    directory = change_str('results/{}_{}/{}/{}' \
+    directory = change_str('results/{}_{}/{}/{}/{}' \
                            .format(data_parameters_str,
                                    training_parameters_str,
                                    upperbound_tr,
-                                   lr_train))
+                                   lr_train,
+                                   model_parameters_str))
     
     make_dir(directory)
 
@@ -265,10 +232,7 @@ if __name__ == '__main__':
     data_train, data_test, prop_vals_train, prop_vals_test \
         = data_loader.split_train_test(data, prop_vals, num_train, 0.85)
     
-    print(data_train[1])
-    
     args = use_gpu()
-    model_parameters = settings['model']
     num_epochs = settings['training']['num_epochs']
     batch_size=settings['training']['batch_size']
 

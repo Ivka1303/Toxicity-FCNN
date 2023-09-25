@@ -2,7 +2,120 @@
 Utilities for visualizing training and dreaming results.
 """
 import matplotlib.pyplot as plt
-from utilities.utils import closefig
+
+
+def test_model_after_train(calc_train, real_vals_prop_train,
+               calc_test, real_vals_prop_test,
+               directory, run_number, prop_name='LC50'):
+    """Scatter plot comparing ground truth data with the modelled data";
+    includes both test and training data."""
+
+    plt.figure()
+    plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set')
+    plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set')
+    print('Real train', min(real_vals_prop_train), max(real_vals_prop_train))
+    print('Calc train', min(calc_train), max(calc_train))
+    print('Real test', min(real_vals_prop_test), max(real_vals_prop_test))
+    print('Calc train', min(calc_test), max(calc_test))
+    plt.xlabel('Modelled ' + prop_name)
+    plt.ylabel('True ' + prop_name)
+    plt.title('Comparison of Modelled vs. True ' + prop_name)
+    plt.legend(loc='best') 
+    name = directory + f'/r{run_number}_test_after_training'
+    plt.savefig(name)
+    plt.close()
+
+
+def prediction_loss(train_loss, test_loss, directory, run_number):
+    """Plot prediction loss during training of model"""
+    print(len(train_loss), train_loss)
+    print(len(test_loss), test_loss)
+    plt.figure()
+    plt.plot(train_loss, color='tab:blue', label='Training Loss')
+    plt.plot(test_loss, color='tab:purple', label='Test Loss')
+    plt.title('Prediction Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc='best')
+    name = directory + f'/r{run_number}_predictionloss_test&train'
+    plt.savefig(name)
+    plt.close()
+
+
+def scatter_residuals(calc_train, real_vals_prop_train,
+                   calc_test, real_vals_prop_test,
+                   directory, run_number, prop_name='LC50'):
+    """Scatter plot comparing residuals with the modelled data;
+    includes both test and training data."""
+    
+    # Calculate residuals
+    residuals_train = real_vals_prop_train - calc_train
+    residuals_test = real_vals_prop_test - calc_test
+
+    plt.figure()
+    
+    # Plot residuals
+    plt.scatter(real_vals_prop_train, residuals_train, color='tab:blue', label='Train set Residuals')
+    plt.scatter(real_vals_prop_test, residuals_test, color='tab:purple', label='Test set Residuals')
+    
+    # For residuals, it's useful to have a horizontal line at y=0 to indicate where residuals would be zero
+    plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
+
+    print('Train residuals', min(residuals_train), max(residuals_train))
+    print('Test residuals', min(residuals_test), max(residuals_test))
+    
+    plt.xlabel('Modelled ' + prop_name)
+    plt.ylabel('Residuals')
+    plt.title('Residuals vs. Modelled ' + prop_name)
+    plt.legend(loc='best')
+    
+    name = directory + f'/r{run_number}_scatter_residuals'
+    plt.savefig(name)
+    plt.close()
+
+
+def plot_residuals_histogram(calc_train, real_vals_prop_train,
+                             calc_test, real_vals_prop_test,
+                             directory, run_number, prop_name='LC50'):
+    """Histogram plot of residuals;
+    includes both test and training data."""
+
+    # Calculate residuals
+    residuals_train = real_vals_prop_train - calc_train
+    residuals_test = real_vals_prop_test - calc_test
+
+    print(residuals_train[:20])
+    print(residuals_test[:20])
+
+    plt.figure()
+
+    # Plot histograms
+    plt.hist(residuals_train, color='tab:blue', alpha=0.5, label='Train set Residuals', bins=50)
+    plt.hist(residuals_test, color='tab:purple', alpha=0.5, label='Test set Residuals', bins=50)
+
+    # It's useful to have a vertical line at x=0 to indicate where residuals would be zero
+    plt.axvline(0, color='black', linewidth=0.5, linestyle='--')
+
+    plt.xlabel('Residual Value')
+    plt.ylabel('Frequency')
+    plt.title('Histogram of Residuals for ' + prop_name)
+    plt.legend(loc='best')
+
+    name = directory + f'/r{run_number}_residuals_histogram'
+    plt.savefig(name)
+    plt.close()
+
+
+def initial_histogram(prop_dream, directory,
+                      dataset_name='QM9', prop_name='LC50'):
+    """Plot distribution of property values from a given list of values"""
+
+    plt.figure()
+    plt.hist(prop_dream, density=True, bins=30)
+    plt.ylabel(prop_name + ' - ' + dataset_name)
+    name = directory + '/QM9_histogram'
+    plt.savefig(name)
+    plt.close()
 
 
 def running_avg_test_loss(avg_test_loss, directory):
@@ -15,118 +128,3 @@ def running_avg_test_loss(avg_test_loss, directory):
     name = directory + '/runningavg_testloss'
     plt.savefig(name)
     closefig()
-
-
-def test_model_after_train(calc_train, real_vals_prop_train,
-               calc_test, real_vals_prop_test,
-               directory, prop_name='LC50'):
-    """Scatter plot comparing ground truth data with the modelled data";
-    includes both test and training data."""
-
-    plt.figure()
-    plt.scatter(calc_train,real_vals_prop_train,color='red',s=40, facecolors='none')
-    plt.scatter(calc_test,real_vals_prop_test,color='blue',s=40, facecolors='none')
-    plt.xlim(min(real_vals_prop_train)-0.5,max(real_vals_prop_train)+0.5)
-    plt.ylim(min(real_vals_prop_train)-0.5,max(real_vals_prop_train)+0.5)
-    plt.xlabel('Modelled '+prop_name)
-    plt.ylabel('Computed '+prop_name)
-    plt.title('Train set (red), test set (blue)')
-    name = directory + '/test_model_after_training'
-    plt.savefig(name)
-    closefig()
-
-
-
-def test_model_before_dream(trained_data_prop, computed_data_prop,
-                            directory, prop_name='LC50'):
-    """Scatter plot comparing ground truth data with modelled data"""
-
-    plt.figure()
-    plt.scatter(trained_data_prop, computed_data_prop)
-    plt.xlabel('Modelled '+prop_name)
-    plt.ylabel('Computed '+prop_name)
-    name = directory + '/test_model_before_dreaming'
-    plt.savefig(name)
-    plt.show()
-    closefig()
-
-
-def prediction_loss(train_loss, test_loss, directory):
-    """Plot prediction loss during training of model"""
-
-    plt.figure()
-    plt.plot(train_loss, color = 'red')
-    plt.plot(test_loss, color = 'blue')
-    plt.title('Prediction loss: training (red), test (blue)')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    name = directory + '/predictionloss_test&train'
-    plt.savefig(name)
-    closefig()
-
-
-def dreamed_histogram(prop_lst, prop, directory, prop_name='LC50'):  # Changed 'logP' to 'LC50'
-    """Plot distribution of property values from a given list of values
-    (after transformation)"""
-
-    plt.figure()
-    plt.hist(prop_lst, density=True, bins=30)
-    plt.ylabel(prop_name+' - around '+str(prop))
-    name = directory + '/dreamed_histogram'
-    plt.savefig(name)
-    closefig()
-
-
-def initial_histogram(prop_dream, directory,
-                      dataset_name='QM9', prop_name='LC50'):
-    """Plot distribution of property values from a given list of values
-    (before transformation)"""
-
-    plt.figure()
-    plt.hist(prop_dream, density=True, bins=30)
-    plt.ylabel(prop_name + ' - ' + dataset_name)
-    name = directory + '/QM9_histogram'
-    plt.savefig(name)
-    closefig()
-
-
-def plot_transform(target, mol, LC50, epoch, loss):
-    """Combine the plots for LC50 transformation and loss over number of
-    epochs.
-    - target: the target LC50 to be optimized.
-    - LC50: the transformation of LC50 over number of epochs.
-    - epoch: all epoch #'s where the molecule transformed when dreaming.
-    - loss: loss values over number of epochs.
-    """
-
-    full_epoch = []
-    full_LC50 = []  # Changed 'full_logP' to 'full_LC50'
-    step = -1
-    for i in range(len(loss)):
-        if i in epoch:
-            step += 1
-        full_LC50.append(LC50[step])  # Changed 'full_logP' to 'full_LC50'
-        full_epoch.append(i)
-
-    fig, ax1 = plt.subplots()
-
-    color = '#550000'
-    ax1.set_xlabel('Epochs')
-    ax1.set_ylabel('LC50', color=color)  # Changed 'LogP' to 'LC50'
-    ax1.plot(full_LC50, linewidth=1, color=color)  # Changed 'full_logP' to 'full_LC50'
-    ax1.tick_params(axis='y', labelcolor=color)
-
-    # instantiate a second axes that shares the same x-axis
-    ax2 = ax1.twinx()
-
-    color = '#000055'
-    ax2.set_ylabel('Training loss', color=color)
-    ax2.plot(loss, color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    plt.title('Target LC50 = '+str(target))
-    plt.tight_layout()
-    #plt.savefig('dream_results/{}_{}_transforms.svg'.format(target, loss[len(loss)-1]))
-
-    plt.show()

@@ -30,12 +30,6 @@ def make_dir(name):
         os.makedirs(name)
 
 
-def closefig():
-    """Clears and closes current instance of a plot."""
-    plt.clf()
-    plt.close()
-
-
 def use_gpu():
     """Connects training to gpu resources via args."""
 
