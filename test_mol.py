@@ -196,12 +196,11 @@ if __name__ == '__main__':
     settings=yaml.safe_load(open("settings.yml","r"))
 
     data_parameters = settings['data']
-    data_parameters_str = str(data_parameters['num_train'])
+    data_parameters_str = str(data_parameters['data_size'])
 
     training_parameters = settings['training']
     training_parameters_str = '{}_{}'.format(training_parameters['num_epochs'],
                                              training_parameters['batch_size'])
-
 
     model_parameters = settings['model']
     model_parameters_str = "".join([str(n) for n in model_parameters.values()])
@@ -211,30 +210,31 @@ if __name__ == '__main__':
     lr_train=settings['lr_train']
     lr_train=float(lr_train)
 
-    directory = change_str('results/{}_{}/{}/{}/{}' \
-                           .format(data_parameters_str,
-                                   training_parameters_str,
-                                   upperbound_tr,
-                                   lr_train,
-                                   model_parameters_str))
-    
-    make_dir(directory)
+    data_size = settings['data']['data_size']
 
-    num_train = settings['data']['num_train']
-
-    num_mol = num_train
-    file_name = settings['data_preprocess']['smiles_file']
+    num_mol = data_size
+    file_name, property_name = settings['data_preprocess']['smiles_file'], settings['data_preprocess']['property_name']
 
     # data-preprocessing
     data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
         data_loader.preprocess(num_mol, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
-        = data_loader.split_train_test(data, prop_vals, num_train, 0.85)
+        = data_loader.split_train_test(data, prop_vals, data_size, 0.85)
     
     args = use_gpu()
     num_epochs = settings['training']['num_epochs']
     batch_size=settings['training']['batch_size']
+
+    #prop_name/dataset_size/num_epochs_batch_size/upperbound/lr/num_neurons_in_each_layer
+    directory = change_str('results/{}/{}_{}/{}/{}/{}' \
+                           .format(property_name, data_parameters_str,
+                                   training_parameters_str,
+                                   upperbound_tr,
+                                   lr_train,
+                                   model_parameters_str))
+    
+    make_dir(directory)
 
     model = train(directory, args, model_parameters, len_max_molec1Hot,
                     upperbound_tr, data_train, prop_vals_train, data_test,

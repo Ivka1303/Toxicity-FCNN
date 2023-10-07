@@ -1,13 +1,14 @@
 mols: ['O1C=CN=C1-C']
 upperbound_tr: 0.95 #why random nums to replace zero are not above 0.95?
 #consider flipping bits instead
-lr_train: 1e-06
+lr_train: 1e-03
 
 data_preprocess:
+  property_name: LC50
   smiles_file: datasets/SelectedSMILES.txt
 
 data:
-  num_train: 1000
+  data_size: 1000
   
 model:
   num_of_neurons_layer1: 50

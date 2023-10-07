@@ -478,7 +478,7 @@ if __name__ == '__main__':
     test = settings['test_model']
     plot = settings['plot_transform']
     mols = settings['mols']
-    file_name = settings['data_preprocess']['smiles_file']
+    file_name = settings['data_preprocess']['smiles_file'] 
     lr_train=settings['lr_train']
     lr_train=float(lr_train)
     lr_dream=settings['lr_dream']

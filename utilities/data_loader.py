@@ -199,16 +199,22 @@ def preprocess(num_mol, file_name):
 def split_train_test(data, prop_vals, num_mol, frac_train):
     """Split data into training and test data. frac_train is the fraction of
     data used for training. 1-frac_train is the fraction used for testing."""
-    train_test_size = [frac_train, 1 - frac_train]
     data = data[:num_mol]
     prop_vals = prop_vals[:num_mol]
 
-    idx_traintest = int(len(data) * train_test_size[0])
-    idx_trainvalid = idx_traintest + int(len(data) * train_test_size[1])
-    data_train = data[0:idx_traintest]
-    prop_vals_train = prop_vals[0:idx_traintest]
+    # Shuffle indices
+    indices = np.arange(num_mol)
+    np.random.shuffle(indices)
 
-    data_test = data[idx_traintest:idx_trainvalid]
-    prop_vals_test = prop_vals[idx_traintest:idx_trainvalid]
+    # Split indices for train and test
+    idx_split = int(num_mol * frac_train)
+    train_indices = indices[:idx_split]
+    test_indices = indices[idx_split:]
+
+    data_train = data[train_indices]
+    prop_vals_train = prop_vals[train_indices]
+    data_test = data[test_indices]
+    prop_vals_test = prop_vals[test_indices]
 
     return data_train, data_test, prop_vals_train, prop_vals_test
+
