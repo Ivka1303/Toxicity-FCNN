@@ -213,11 +213,12 @@ if __name__ == '__main__':
     data_size = settings['data']['data_size']
 
     num_mol = data_size
-    file_name, property_name = settings['data_preprocess']['smiles_file'], settings['data_preprocess']['property_name']
+    file_name = settings['data_preprocess']['smiles_file']
+    prop_name = file_name[9:-4]
 
     # data-preprocessing
     data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
-        data_loader.preprocess(num_mol, file_name)
+        data_loader.preprocess(num_mol, prop_name, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
         = data_loader.split_train_test(data, prop_vals, data_size, 0.85)
@@ -228,7 +229,7 @@ if __name__ == '__main__':
 
     #prop_name/dataset_size/num_epochs_batch_size/upperbound/lr/num_neurons_in_each_layer
     directory = change_str('results/{}/{}_{}/{}/{}/{}' \
-                           .format(property_name, data_parameters_str,
+                           .format(prop_name, data_parameters_str,
                                    training_parameters_str,
                                    upperbound_tr,
                                    lr_train,

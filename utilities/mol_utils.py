@@ -103,24 +103,3 @@ def draw_mol_to_file(mol_lst, directory):
     for smiles in mol_lst:
         mol = MolFromSmiles(smiles)
         Draw.MolToFile(mol,directory+'/'+smiles+'.pdf')
-
-
-def LC50_from_molecules():
-    """
-    Extract list of LC50 from CSV file
-    """
-    data = pd.read_csv('datasets/LC50_filtered.csv')
-    LC50s = data['Filtered LC50[-LOG(mol/L)]'].values
-    return LC50s
-
-
-def LC50_from_single_molecule(smiles): #not used but maybe will be useful
-    """
-    Extract the LC50 value for a single molecule from the CSV file
-    """
-    # Read the CSV file
-    data = pd.read_csv('datasets/LC50_filtered.csv')
-    # Match the SMILES representation with the LC50 value
-    LC50 = data[data['Filtered SMILES'] == smiles]['Filtered LC50[-LOG(mol/L)]'].values[0]
-    
-    return LC50
