@@ -12,14 +12,6 @@ from rdkit import RDLogger
 import logging      
 
 
-def get_largest_selfie_len(smiles_list):
-    """Returns the length of the largest SELFIES string from a list of SMILES."""
-
-    selfies_list = list(map(sf.encoder, smiles_list))
-    largest_selfies_len = max(sf.len_selfies(s) for s in selfies_list)
-    return largest_selfies_len
-
-
 def write_lengths_to_file(filename, smiles_len, selfies_len):
     """Utility function to write the largest SMILES and SELFIES lengths to a file."""
     with open(filename, "w+") as f:
@@ -35,7 +27,7 @@ def read_lengths_from_file(filename):
     return smiles_len, selfies_len
 
 
-def get_largest_string_len(smiles_list, prop_name):
+def get_largest_string_len(selfies_list, smiles_list, prop_name):
     """Returns the length of the largest SELFIES or SMILES string from a list
     of SMILES. If this dataset has been used already,
     then these values will be accessed from a corresponding file."""
@@ -44,26 +36,24 @@ def get_largest_string_len(smiles_list, prop_name):
     name = os.path.join(directory, f'{prop_name}') 
 
     if os.path.exists(name):
-        largest_smiles_len, largest_selfies_len = read_lengths_from_file(name)
-    else:
-        # Ensure directory exists
-        utils.make_dir(directory)
+        os.remove(name)
+        #largest_smiles_len, largest_selfies_len = read_lengths_from_file(name) TODO
+    #else:
+    # Ensure directory exists
+    utils.make_dir(directory)
 
-        # Compute the lengths
-        largest_smiles_len = len(max(smiles_list, key=len))
-        largest_selfies_len = get_largest_selfie_len(smiles_list)
-
-        # Store the lengths
-        write_lengths_to_file(name, largest_smiles_len, largest_selfies_len)
+    # Compute the lengths
+    largest_smiles_len = len(max(smiles_list, key=len))
+    largest_selfies_len = max(sf.len_selfies(s) for s in selfies_list)
+    # Store the lengths
+    write_lengths_to_file(name, largest_smiles_len, largest_selfies_len)
 
     return largest_smiles_len, largest_selfies_len
 
 
-def get_selfies_alphabet(smiles_list):
+def get_selfies_alphabet(selfies_list):
     """Returns a sorted list of all SELFIES tokens required to build a
     SELFIES string for each molecule."""
-
-    selfies_list = list(map(sf.encoder, smiles_list))
     all_selfies_symbols = sf.get_alphabet_from_selfies(selfies_list)
     all_selfies_symbols.add('[nop]')
     all_selfies_symbols.add('.')
@@ -92,7 +82,7 @@ def read_alphabet_from_file(filename):
     return np.asanyarray(df.alphabet)
 
 
-def get_string_alphabet(smiles_list, prop_name, filename):
+def get_string_alphabet(selfies_list, smiles_list, prop_name, filename):
     """Returns a sorted list of all SELFIES tokens and SMILES tokens required
     to build a string representation of each molecule. If this dataset has
     already been used, then these will be accessed from a correspondning file."""
@@ -103,31 +93,33 @@ def get_string_alphabet(smiles_list, prop_name, filename):
 
     # Check if the alphabets are already saved, else generate and save them
     if os.path.exists(name1) and os.path.exists(name2):
-        smiles_alphabet = read_alphabet_from_file(name1)
-        selfies_alphabet = read_alphabet_from_file(name2)
-    else:
-        # Ensure directory exists
-        utils.make_dir(directory)
+        os.remove(name1)
+        os.remove(name2)
+        #smiles_alphabet = read_alphabet_from_file(name1) TODO
+        #selfies_alphabet = read_alphabet_from_file(name2)
+    #else:
+    # Ensure directory exists
+    utils.make_dir(directory)
 
-        # Generate SMILES alphabet
-        smiles_alphabet = list(set(''.join(smiles_list)))
-        smiles_alphabet.append(' ')  # for padding
-        smiles_alphabet.sort()
-        write_alphabet_to_file(name1, smiles_alphabet)
+    # Generate SMILES alphabet
+    smiles_alphabet = list(set(''.join(smiles_list)))
+    smiles_alphabet.append(' ')  # for padding
+    smiles_alphabet.sort()
+    write_alphabet_to_file(name1, smiles_alphabet)
 
-        # Generate SELFIES alphabet
-        selfies_alphabet = get_selfies_alphabet(smiles_list)
-        write_alphabet_to_file(name2, selfies_alphabet)
+    # Generate SELFIES alphabet
+    selfies_alphabet = get_selfies_alphabet(selfies_list)
+    write_alphabet_to_file(name2, selfies_alphabet)
 
     return smiles_alphabet, selfies_alphabet
 
 
-def get_selfie_and_smiles_info(smiles_list, prop_name, filename):
+def get_selfie_and_smiles_info(selfies_list, smiles_list, prop_name, filename):
     """Returns the length of the largest string representation and the list
     of tokens required to build a string representation of each molecule."""
 
-    largest_smiles_len, largest_selfies_len = get_largest_string_len(smiles_list, prop_name)
-    smiles_alphabet, selfies_alphabet = get_string_alphabet(smiles_list, filename, prop_name)
+    largest_smiles_len, largest_selfies_len = get_largest_string_len(selfies_list, smiles_list, prop_name)
+    smiles_alphabet, selfies_alphabet = get_string_alphabet(selfies_list, smiles_list, filename, prop_name)
     return selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len
 
 
@@ -175,7 +167,7 @@ def preprocess(num_mol, prop_name, file_name):
     selfies_list, smiles_list = get_selfie_and_smiles_encodings(smiles_list, num_mol)
     print('Finished reading SMILES data.\n')
     selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len \
-        = get_selfie_and_smiles_info(smiles_list, prop_name, file_name) #TODO
+        = get_selfie_and_smiles_info(selfies_list, smiles_list, prop_name, file_name) #TODO
     print(f'Loading {prop_name} of all molecules...')
     #RDLogger.DisableLog('rdApp.*')
     #logging.basicConfig(level=logging.INFO) 

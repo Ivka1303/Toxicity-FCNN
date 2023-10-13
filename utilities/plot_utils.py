@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 
 def test_model_after_train(calc_train, real_vals_prop_train,
                calc_test, real_vals_prop_test,
-               directory, run_number, prop_name='LC50'):
+               directory, run_number, prop_name):
     """Scatter plot comparing ground truth data with the modelled data";
     includes both test and training data."""
 
     plt.figure()
-    plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set')
-    plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set')
+    plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set', alpha = 0.5, s=3)
+    plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set', alpha = 0.5, s=3)
     print('Real train', min(real_vals_prop_train), max(real_vals_prop_train))
     print('Calc train', min(calc_train), max(calc_train))
     print('Real test', min(real_vals_prop_test), max(real_vals_prop_test))
@@ -44,7 +44,7 @@ def prediction_loss(train_loss, test_loss, directory, run_number):
 
 def scatter_residuals(calc_train, real_vals_prop_train,
                    calc_test, real_vals_prop_test,
-                   directory, run_number, prop_name='LC50'):
+                   directory, run_number, prop_name):
     """Scatter plot comparing residuals with the modelled data;
     includes both test and training data."""
     
@@ -80,7 +80,7 @@ def scatter_residuals(calc_train, real_vals_prop_train,
 
 def plot_residuals_histogram(calc_train, real_vals_prop_train,
                              calc_test, real_vals_prop_test,
-                             directory, run_number, prop_name='LC50'):
+                             directory, run_number, prop_name):
     """Histogram plot of residuals;
     includes both test and training data."""
 
