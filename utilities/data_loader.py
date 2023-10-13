@@ -9,6 +9,8 @@ import os
 from utilities import utils
 from utilities import mol_utils
 from rdkit import RDLogger   
+import sklearn 
+from sklearn.preprocessing import MinMaxScaler
 import logging      
 
 
@@ -162,16 +164,16 @@ def preprocess(num_mol, prop_name, file_name):
     converts each SMILES to the SELFIES and creates one-hot encoding;
     encodes other string information."""
     print(f'Loading SMILES and {prop_name} data...')
-    smiles_list, prop_list = read_data(prop_name, file_name)
+    smiles_list, prop = read_data(prop_name, file_name)
+    scaler = MinMaxScaler()
+    prop_list = scaler.fit_transform(prop.reshape(-1, 1)).flatten()
+    print('BRUH', min(prop_list), max(prop_list))
     print('Translating SMILES to SELFIES...')
     selfies_list, smiles_list = get_selfie_and_smiles_encodings(smiles_list, num_mol)
     print('Finished reading SMILES data.\n')
     selfies_alphabet, largest_selfies_len, smiles_alphabet, largest_smiles_len \
         = get_selfie_and_smiles_info(selfies_list, smiles_list, prop_name, file_name) #TODO
     print(f'Loading {prop_name} of all molecules...')
-    #RDLogger.DisableLog('rdApp.*')
-    #logging.basicConfig(level=logging.INFO) 
-    #RDLogger.DisableLog('rdApp.error.explicitValence') TODO
 
     print('Representation: SELFIES')
     alphabet = selfies_alphabet
@@ -190,7 +192,7 @@ def preprocess(num_mol, prop_name, file_name):
     print('Alphabet has ', len_alphabet, ' letters, largest molecule is ',
           len_max_molec, ' letters.')
 
-    return data, prop_list, alphabet, len_max_molec1Hot, largest_molecule_len
+    return data, prop_list, alphabet, len_max_molec1Hot, largest_molecule_len, scaler
 
 
 def split_train_test(data, prop_vals, num_mol, frac_train):

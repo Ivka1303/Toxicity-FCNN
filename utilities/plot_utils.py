@@ -6,11 +6,18 @@ import matplotlib.pyplot as plt
 
 def test_model_after_train(calc_train, real_vals_prop_train,
                calc_test, real_vals_prop_test,
-               directory, run_number, prop_name):
-    """Scatter plot comparing ground truth data with the modelled data";
+               directory, run_number, prop_name, scaler):
+    """Scatter plot comparing ground truth data with the modelled data;
     includes both test and training data."""
 
+    # Inverse transform the calculated and real property values
+    calc_train = scaler.inverse_transform(calc_train.reshape(-1, 1)).flatten()
+    real_vals_prop_train = scaler.inverse_transform(real_vals_prop_train.reshape(-1, 1)).flatten()
+    calc_test = scaler.inverse_transform(calc_test.reshape(-1, 1)).flatten()
+    real_vals_prop_test = scaler.inverse_transform(real_vals_prop_test.reshape(-1, 1)).flatten()
+    
     plt.figure()
+
     plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set', alpha = 0.5, s=3)
     plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set', alpha = 0.5, s=3)
     print('Real train', min(real_vals_prop_train), max(real_vals_prop_train))
@@ -24,6 +31,7 @@ def test_model_after_train(calc_train, real_vals_prop_train,
     name = directory + f'/r{run_number}_test_after_training'
     plt.savefig(name)
     plt.close()
+
 
 
 def prediction_loss(train_loss, test_loss, directory, run_number):
