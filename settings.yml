@@ -1,19 +1,21 @@
 mols: ['O1C=CN=C1-C']
-upperbound_tr: 0.95 #why random nums to replace zero are not above 0.95?
-#consider flipping bits instead
-lr_train: 4e-02
+upperbound_tr: 0 
+lr_train: 1e-03
 use_existent: True
 
 data_preprocess:
-  smiles_file: datasets/C_Count.csv
+  smiles_file: datasets/Sol[-LOG(mol_L)].csv
 
 data:
   data_size: 800
   
 model:
   num_of_neurons_layer1: 100
-  num_of_neurons_layer2: 100
-  num_of_neurons_layer3: 100
+  num_of_neurons_layer2: 75
+  num_of_neurons_layer3: 50
+  #hidden_size: 128
+  #num_layers: 2
+  #batch_first: True
 
 training:
   num_epochs: 12

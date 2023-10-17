@@ -19,9 +19,9 @@ from utilities.utils import make_dir, change_str, use_gpu
 
 
 class fc_model(nn.Module):
-
-    def __init__(self, len_max_molec1Hot, num_of_neurons_layer1,
-                 num_of_neurons_layer2, num_of_neurons_layer3):
+    def __init__(self, len_max_molec1Hot, alphabet_size, 
+                 num_of_neurons_layer1, num_of_neurons_layer2, 
+                 num_of_neurons_layer3, batch_first=True):
         """
         Fully Connected layers of the RNN.
         """
@@ -45,11 +45,11 @@ class fc_model(nn.Module):
         """
         h1 = self.encode_1d(x)
         return h1
-
+    
 
 def train_model(name, model, directory, args,
                 upperbound, prop_name, data_train, prop_vals_train, data_test,
-                prop_vals_test, lr_enc, num_epochs, batch_size, run_number):
+                prop_vals_test, lr_enc, num_epochs, batch_size, run_number, scaler):
     """Train the model"""
 
     # initialize an instance of the model
@@ -142,11 +142,15 @@ def train_model(name, model, directory, args,
             real_vals_prop_train=prop_vals_train.detach().cpu().numpy()
             real_vals_prop_test=prop_vals_test.detach().cpu().numpy()
             curr_best_model = model.state_dict()
+            print('Real Property; Train Set', min(real_vals_prop_train), max(real_vals_prop_train))
+            print('Real Property; Test Set', min(real_vals_prop_test), max(real_vals_prop_test))
+            print('Calculated Property; Train Set', min(calc_train), max(calc_train))
+            print('Calculated Property; Test Set', min(calc_test), max(calc_test))
 
     plot_utils.prediction_loss(train_loss, test_loss, directory, run_number)
     plot_utils.test_model_after_train(calc_train, real_vals_prop_train,
                                             calc_test,real_vals_prop_test,
-                                            directory, run_number, prop_name)  
+                                            directory, run_number, prop_name, scaler)  
     plot_utils.scatter_residuals(calc_train, real_vals_prop_train,
                                  calc_test, real_vals_prop_test,
                                  directory, run_number, prop_name)
@@ -169,18 +173,18 @@ def load_model(file_name, args, len_max_molec1Hot, model_parameters):
 
 def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
           data_train, prop_vals_train, data_test, prop_vals_test, lr_train,
-          num_epochs, batch_size):
+          num_epochs, batch_size, scaler, alphabet_size):
     print("start training")
     existing_files = os.listdir(directory)
     run_number = sum(1 for file in existing_files if file.endswith('.pt')) + 1
     name = change_str(directory)+f'/r{run_number}.pt'
 
-    model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
+    model = fc_model(len_max_molec1Hot, alphabet_size, **model_parameters).to(device=args.device)
     model.train()
 
     train_model(name, model, directory, args, upperbound, prop_name,
                 data_train, prop_vals_train, data_test, prop_vals_test,
-                lr_train, num_epochs, batch_size, run_number)
+                lr_train, num_epochs, batch_size, run_number, scaler)
 
     model.load_state_dict(torch.load(name))
     model.eval()
@@ -214,7 +218,7 @@ if __name__ == '__main__':
     prop_name = file_name[9:-4]
 
     # data-preprocessing
-    data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len = \
+    data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len, scaler = \
         data_loader.preprocess(num_mol, prop_name, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
@@ -236,4 +240,5 @@ if __name__ == '__main__':
 
     model = train(directory, args, model_parameters, len_max_molec1Hot,
                     upperbound_tr, data_train, prop_vals_train, data_test,
-                    prop_vals_test, lr_train, num_epochs, batch_size)
+                    prop_vals_test, lr_train, num_epochs, batch_size, scaler,
+                    alphabet_size=len(alphabet))
