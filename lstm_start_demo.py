@@ -27,6 +27,12 @@ class fc_model(nn.Module):
         """
         super(fc_model, self).__init__()
 
+        # LSTM layer
+        self.lstm = nn.LSTM(input_size=len_max_molec1Hot, 
+                            hidden_size=len_max_molec1Hot, 
+                            num_layers=4, 
+                            batch_first=batch_first)
+
         # Reduce dimension upto second last layer of Encoder
         self.encode_1d = nn.Sequential(
             nn.Linear(len_max_molec1Hot, num_of_neurons_layer1),
@@ -43,7 +49,17 @@ class fc_model(nn.Module):
         Pass through the model (is implicictely called when model is created)
         x - data
         """
-        h1 = self.encode_1d(x)
+        print("Input shape:", x.shape)  # Should be (batch_size, seq_len, 31)
+        
+        # LSTM outputs the output for each timestep and the final hidden and cell states
+        lstm_out, (hn, cn) = self.lstm(x)
+
+        print("LSTM final hidden state shape:", hn[-1].shape)  # Should be (batch_size, hidden_dim)
+        
+        # We use the final hidden state to pass through our FC layers
+        h1 = self.encode_1d(hn[-1])
+
+        print("Output shape:", h1.shape)  # Should be (batch_size, 1)
         return h1
     
 
@@ -53,7 +69,9 @@ def train_model(name, model, directory, args,
     """Train the model"""
 
     # initialize an instance of the model
-    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc) #, weight_decay=1e-5) for L2 regularization
+    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc) #l2-regularization
+
+    # reshape for efficient parallelization
     data_train=torch.tensor(data_train, dtype=torch.float, device=args.device)
     data_test=torch.tensor(data_test, dtype=torch.float, device=args.device)
     reshaped_data_train = torch.reshape(data_train,
@@ -96,6 +114,7 @@ def train_model(name, model, directory, args,
                                       current_smiles_stop]
             # feedforward step
             calc_properties = model(curr_mol)
+            print('BRUH1', calc_properties.shape)
             calc_properties=torch.reshape(calc_properties,[len(calc_properties)])
 
             # mean-squared error between calculated property and modelled property

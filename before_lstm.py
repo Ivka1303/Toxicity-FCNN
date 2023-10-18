@@ -53,7 +53,9 @@ def train_model(name, model, directory, args,
     """Train the model"""
 
     # initialize an instance of the model
-    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc) #, weight_decay=1e-5) for L2 regularization
+    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc, weight_decay = 1e-1500) #l2-regularization
+
+    # reshape for efficient parallelization
     data_train=torch.tensor(data_train, dtype=torch.float, device=args.device)
     data_test=torch.tensor(data_test, dtype=torch.float, device=args.device)
     reshaped_data_train = torch.reshape(data_train,
