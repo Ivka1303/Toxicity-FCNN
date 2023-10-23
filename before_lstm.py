@@ -31,7 +31,11 @@ class fc_model(nn.Module):
         self.encode_1d = nn.Sequential(
             nn.Linear(len_max_molec1Hot, num_of_neurons_layer1),
             nn.ReLU(),
+            nn.Linear(num_of_neurons_layer1, num_of_neurons_layer1),
+            nn.ReLU(),
             nn.Linear(num_of_neurons_layer1, num_of_neurons_layer2),
+            nn.ReLU(),
+            nn.Linear(num_of_neurons_layer2, num_of_neurons_layer2),
             nn.ReLU(),
             nn.Linear(num_of_neurons_layer2, num_of_neurons_layer3),
             nn.ReLU(),
@@ -53,7 +57,7 @@ def train_model(name, model, directory, args,
     """Train the model"""
 
     # initialize an instance of the model
-    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc, weight_decay = 1e-1500) #l2-regularization
+    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc, weight_decay = 1e-5) #weight_decay = 1e-1500 l2-regularization
 
     # reshape for efficient parallelization
     data_train=torch.tensor(data_train, dtype=torch.float, device=args.device)
@@ -81,7 +85,7 @@ def train_model(name, model, directory, args,
         # add stochasticity to the training
         x = [i for i in range(len(reshaped_data_train))]  # random shuffle input
         shuffle(x)
-        reshaped_data_train  = reshaped_data_train[x]
+        reshaped_data_train = reshaped_data_train[x]
         prop_vals_train = prop_vals_train[x]
         reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
                                             upper_bound=upperbound)
@@ -222,7 +226,7 @@ if __name__ == '__main__':
         data_loader.preprocess(num_mol, prop_name, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
-        = data_loader.split_train_test(data, prop_vals, data_size, 0.85)
+        = data_loader.split_train_test(data, prop_vals, data_size, 0.75)
     
     args = use_gpu()
     num_epochs = settings['training']['num_epochs']

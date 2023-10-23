@@ -2,6 +2,7 @@
 Utilities for handling molecular properties and the conversion between
 molecular representations.
 """
+import torch
 import re
 import pandas as pd
 import numpy as np
@@ -90,6 +91,16 @@ def add_noise_to_hot(hot, upper_bound): #TODO is there a way to optimize the enc
     Replaces all zeroes with a random float in the range [0,upper_bound]
     """
     return hot+upper_bound*rand(hot.shape) 
+
+
+def add_noise_to_unflattened(hot, upper_bound): #TODO is there a way to optimize the encodings (e.g., shorten them)
+    """
+    Replaces all zeroes with a random float in the range [0,upper_bound]
+    """
+    noise = upper_bound * torch.rand(hot.shape).to(hot.device)
+    zero_mask = (hot == 0).float()
+    noisy_hot = hot + zero_mask * noise
+    return noisy_hot
 
 
 def draw_mol_to_file(mol_lst, directory):

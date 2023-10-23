@@ -2,6 +2,7 @@
 Utilities for visualizing training and dreaming results.
 """
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 def test_model_after_train(calc_train, real_vals_prop_train,
@@ -16,6 +17,13 @@ def test_model_after_train(calc_train, real_vals_prop_train,
     calc_test = scaler.inverse_transform(calc_test.reshape(-1, 1)).flatten()
     real_vals_prop_test = scaler.inverse_transform(real_vals_prop_test.reshape(-1, 1)).flatten()
     
+    # Calculate R^2 and RMSE for train and test data
+    r2_train = r2_score(real_vals_prop_train, calc_train)
+    rmse_train = mean_squared_error(real_vals_prop_train, calc_train, squared=False)
+
+    r2_test = r2_score(real_vals_prop_test, calc_test)
+    rmse_test = mean_squared_error(real_vals_prop_test, calc_test, squared=False)
+
     plt.figure()
 
     plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set', alpha = 0.5, s=3)
@@ -26,7 +34,11 @@ def test_model_after_train(calc_train, real_vals_prop_train,
     print('Calc train', min(calc_test), max(calc_test))
     plt.xlabel('Modelled ' + prop_name)
     plt.ylabel('True ' + prop_name)
-    plt.title('Comparison of Modelled vs. True ' + prop_name)
+    plt.title(f'Comparison of Modelled vs. True {prop_name}')
+    metrics_text = (f'Train R^2: {r2_train:.2f}, Train RMSE: {rmse_train:.2f}\n'
+                    f'Test R^2: {r2_test:.2f}, Test RMSE: {rmse_test:.2f}')
+    plt.text(0.95, 0.05, metrics_text, transform=plt.gca().transAxes, horizontalalignment='right',
+             verticalalignment='bottom', bbox=dict(boxstyle='round', facecolor='white', alpha=0.7))
     plt.legend(loc='best') 
     name = directory + f'/r{run_number}_test_after_training'
     plt.savefig(name)

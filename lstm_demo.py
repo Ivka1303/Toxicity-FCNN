@@ -14,12 +14,14 @@ from random import shuffle
 from utilities import data_loader
 from utilities import plot_utils
 
-from utilities.mol_utils import add_noise_to_hot
+from utilities.mol_utils import add_noise_to_unflattened
 from utilities.utils import make_dir, change_str, use_gpu
 
+# Set random seed for reproducibility
+torch.manual_seed(0)
 
 class fc_model(nn.Module):
-    def __init__(self, len_max_molec1Hot, alphabet_size, 
+    def __init__(self, alphabet_size, len_max_molec,
                  num_of_neurons_layer1, num_of_neurons_layer2, 
                  num_of_neurons_layer3, batch_first=True):
         """
@@ -28,14 +30,14 @@ class fc_model(nn.Module):
         super(fc_model, self).__init__()
 
         # LSTM layer
-        self.lstm = nn.LSTM(input_size=len_max_molec1Hot, 
-                            hidden_size=len_max_molec1Hot, 
-                            num_layers=4, 
+        self.lstm = nn.LSTM(input_size=alphabet_size, 
+                            hidden_size=len_max_molec, 
+                            num_layers=1, 
                             batch_first=batch_first)
 
-        # Reduce dimension upto second last layer of Encoder
+        # Fully connected layers
         self.encode_1d = nn.Sequential(
-            nn.Linear(len_max_molec1Hot, num_of_neurons_layer1),
+            nn.Linear(len_max_molec, num_of_neurons_layer1),
             nn.ReLU(),
             nn.Linear(num_of_neurons_layer1, num_of_neurons_layer2),
             nn.ReLU(),
@@ -46,20 +48,14 @@ class fc_model(nn.Module):
 
     def forward(self, x):
         """
-        Pass through the model (is implicictely called when model is created)
+        Pass through the model.
         x - data
         """
-        print("Input shape:", x.shape)  # Should be (batch_size, seq_len, 31)
-        
         # LSTM outputs the output for each timestep and the final hidden and cell states
         lstm_out, (hn, cn) = self.lstm(x)
-
-        print("LSTM final hidden state shape:", hn[-1].shape)  # Should be (batch_size, hidden_dim)
-        
         # We use the final hidden state to pass through our FC layers
-        h1 = self.encode_1d(hn[-1])
-
-        print("Output shape:", h1.shape)  # Should be (batch_size, 1)
+        h1 = self.encode_1d(lstm_out[:, -1, :])
+        #h1 = self.encode_1d(hn[-1])
         return h1
     
 
@@ -69,59 +65,46 @@ def train_model(name, model, directory, args,
     """Train the model"""
 
     # initialize an instance of the model
+    # initialize an instance of the model
     optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc) #l2-regularization
 
-    # reshape for efficient parallelization
-    data_train=torch.tensor(data_train, dtype=torch.float, device=args.device)
-    data_test=torch.tensor(data_test, dtype=torch.float, device=args.device)
-    reshaped_data_train = torch.reshape(data_train,
-                                        (data_train.shape[0],
-                                         data_train.shape[1]*data_train.shape[2]))
-    reshaped_data_test = torch.reshape(data_test,
-                                       (data_test.shape[0],
-                                        data_test.shape[1]*data_test.shape[2]))
+    # Convert the datasets to tensors and move to the appropriate device
+    data_train = torch.tensor(data_train, dtype=torch.float, device=args.device)
+    data_test = torch.tensor(data_test, dtype=torch.float, device=args.device)
+    prop_vals_train = torch.tensor(prop_vals_train, dtype=torch.float, device=args.device)
+    prop_vals_test = torch.tensor(prop_vals_test, dtype=torch.float, device=args.device)
 
-    # add random noise to one-hot encoding
-    reshaped_data_test_edit = add_noise_to_hot(reshaped_data_test, upperbound)
-    prop_vals_train=torch.tensor(prop_vals_train,
-                                 dtype=torch.float, device=args.device)
-    prop_vals_test=torch.tensor(prop_vals_test,
-                                dtype=torch.float, device=args.device)
+    # Add random noise to one-hot encoding for test data
+    data_test_edit = add_noise_to_unflattened(data_test, upperbound)  # Assuming this function can handle 3D tensors
 
-    test_loss=[]
-    train_loss=[]
+    test_loss = []
+    train_loss = []
     min_loss = float('inf')
 
     for epoch in range(num_epochs):
 
         # add stochasticity to the training
-        x = [i for i in range(len(reshaped_data_train))]  # random shuffle input
-        shuffle(x)
-        reshaped_data_train  = reshaped_data_train[x]
+        x = torch.randperm(len(data_train))  # random shuffle input
+        data_train = data_train[x]
         prop_vals_train = prop_vals_train[x]
-        reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
-                                            upper_bound=upperbound)
 
-        for batch_iteration in range(int(len(reshaped_data_train_edit)/batch_size)):
+        data_train_edit = add_noise_to_unflattened(data_train, upper_bound=upperbound)  # Assuming this function can handle 3D tensors
 
-            current_smiles_start, current_smiles_stop = \
-                batch_iteration * batch_size, (batch_iteration + 1) * batch_size
+        for batch_iteration in range(int(len(data_train_edit) / batch_size)):
+            current_smiles_start, current_smiles_stop = batch_iteration * batch_size, (batch_iteration + 1) * batch_size
 
             # slice data into batches
-            curr_mol=reshaped_data_train_edit[current_smiles_start : \
-                                              current_smiles_stop]
-            curr_prop=prop_vals_train[current_smiles_start : \
-                                      current_smiles_stop]
+            curr_mol = data_train_edit[current_smiles_start:current_smiles_stop]
+            curr_prop = prop_vals_train[current_smiles_start:current_smiles_stop]
+
             # feedforward step
             calc_properties = model(curr_mol)
-            print('BRUH1', calc_properties.shape)
-            calc_properties=torch.reshape(calc_properties,[len(calc_properties)])
-
+            
             # mean-squared error between calculated property and modelled property
             criterion = nn.MSELoss()
-            real_loss=criterion(calc_properties, curr_prop)
+            real_loss = criterion(calc_properties.squeeze(), curr_prop)
 
-            loss = torch.clamp(real_loss, min = 0., max = 50000.).double()
+            loss = torch.clamp(real_loss, min=0., max=50000.).double()
 
             # backpropagation step
             optimizer_encoder.zero_grad()
@@ -129,24 +112,19 @@ def train_model(name, model, directory, args,
             optimizer_encoder.step()
 
         # calculate train set
-        calc_train_set_property = model(reshaped_data_train_edit)
-        calc_train_set_property=torch.reshape(calc_train_set_property,
-                                              [len(calc_train_set_property)])
+        calc_train_set_property = model(data_train_edit)
         criterion = nn.MSELoss()
-        real_loss_train=criterion(calc_train_set_property, prop_vals_train)
-        real_loss_train_num=real_loss_train.detach().cpu().numpy()
+        real_loss_train = criterion(calc_train_set_property.squeeze(), prop_vals_train)
+        real_loss_train_num = real_loss_train.detach().cpu().numpy()
 
         # calculate test set
-        calc_test_set_property = model(reshaped_data_test_edit)
+        calc_test_set_property = model(data_test_edit)
         criterion = nn.MSELoss()
-        calc_test_set_property=torch.reshape(calc_test_set_property,
-                                             [len(calc_test_set_property)])
-        real_loss_test=criterion(calc_test_set_property, prop_vals_test)
-        real_loss_test_num=real_loss_test.detach().cpu().numpy()
+        real_loss_test = criterion(calc_test_set_property.squeeze(), prop_vals_test)
+        real_loss_test_num = real_loss_test.detach().cpu().numpy()
 
-
-        print('epoch: '+str(epoch)+' - avg loss: '+ \
-              str(np.mean(real_loss_train_num))+', testset: '+ \
+        print('epoch: ' + str(epoch) + ' - avg loss: ' +
+              str(np.mean(real_loss_train_num)) + ', testset: ' +
               str(np.mean(real_loss_test_num)))
 
         test_loss.append(real_loss_test_num)
@@ -154,10 +132,10 @@ def train_model(name, model, directory, args,
 
         if real_loss_test_num < min_loss:
             min_loss = real_loss_test_num
-            calc_train=calc_train_set_property.detach().cpu().numpy()
-            calc_test=calc_test_set_property.detach().cpu().numpy()
-            real_vals_prop_train=prop_vals_train.detach().cpu().numpy()
-            real_vals_prop_test=prop_vals_test.detach().cpu().numpy()
+            calc_train = calc_train_set_property.detach().cpu().numpy().squeeze()
+            calc_test = calc_test_set_property.detach().cpu().numpy().squeeze()
+            real_vals_prop_train = prop_vals_train.detach().cpu().numpy()
+            real_vals_prop_test = prop_vals_test.detach().cpu().numpy()
             curr_best_model = model.state_dict()
             print('Real Property; Train Set', min(real_vals_prop_train), max(real_vals_prop_train))
             print('Real Property; Test Set', min(real_vals_prop_test), max(real_vals_prop_test))
@@ -188,15 +166,15 @@ def load_model(file_name, args, len_max_molec1Hot, model_parameters):
     return model
 
 
-def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
+def train(directory, args, model_parameters, len_max_molec, upperbound,
           data_train, prop_vals_train, data_test, prop_vals_test, lr_train,
           num_epochs, batch_size, scaler, alphabet_size):
     print("start training")
     existing_files = os.listdir(directory)
     run_number = sum(1 for file in existing_files if file.endswith('.pt')) + 1
     name = change_str(directory)+f'/r{run_number}.pt'
-
-    model = fc_model(len_max_molec1Hot, alphabet_size, **model_parameters).to(device=args.device)
+    print(data_test.shape)
+    model = fc_model(alphabet_size, len_max_molec, **model_parameters).to(device=args.device)
     model.train()
 
     train_model(name, model, directory, args, upperbound, prop_name,
@@ -235,7 +213,7 @@ if __name__ == '__main__':
     prop_name = file_name[9:-4]
 
     # data-preprocessing
-    data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len, scaler = \
+    data, prop_vals, alphabet, len_max_molec1Hot, len_max_molec, scaler = \
         data_loader.preprocess(num_mol, prop_name, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
@@ -255,7 +233,7 @@ if __name__ == '__main__':
     
     make_dir(directory)
 
-    model = train(directory, args, model_parameters, len_max_molec1Hot,
+    model = train(directory, args, model_parameters, len_max_molec,
                     upperbound_tr, data_train, prop_vals_train, data_test,
                     prop_vals_test, lr_train, num_epochs, batch_size, scaler,
                     alphabet_size=len(alphabet))
