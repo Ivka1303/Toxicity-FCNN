@@ -1,22 +1,22 @@
 mols: ['O1C=CN=C1-C']
-upperbound_tr: 0
+upperbound_tr: 0.05
 lr_train: 1e-4
 use_existent: True
 
 data_preprocess:
-  smiles_file: datasets/C.csv
+  smiles_file: datasets/LogS.csv
 
 data:
-  data_size: 800
+  data_size: 4800
   
 model:
-  num_of_neurons_layer1: 500
-  num_of_neurons_layer2: 400
-  num_of_neurons_layer3: 300
+  num_of_neurons_layer1: 750
+  num_of_neurons_layer2: 600
+  num_of_neurons_layer3: 650
   #hidden_size: 128
   #num_layers: 2
   #batch_first: True
 
 training:
-  num_epochs: 200
-  batch_size: 100 #to make it faster you could increase this one (but you can get stuck in local minima)
+  num_epochs: 20
+  batch_size: 50 #to make it faster you could increase this one (but you can get stuck in local minima)

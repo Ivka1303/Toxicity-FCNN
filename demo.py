@@ -53,7 +53,9 @@ def train_model(name, model, directory, args,
     """Train the model"""
 
     # initialize an instance of the model
-    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc) #, weight_decay=1e-5) for L2 regularization
+    optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc, weight_decay = 1e-5) #l2-regularization
+
+    # reshape for efficient parallelization
     data_train=torch.tensor(data_train, dtype=torch.float, device=args.device)
     data_test=torch.tensor(data_test, dtype=torch.float, device=args.device)
     reshaped_data_train = torch.reshape(data_train,
@@ -79,7 +81,7 @@ def train_model(name, model, directory, args,
         # add stochasticity to the training
         x = [i for i in range(len(reshaped_data_train))]  # random shuffle input
         shuffle(x)
-        reshaped_data_train  = reshaped_data_train[x]
+        reshaped_data_train = reshaped_data_train[x]
         prop_vals_train = prop_vals_train[x]
         reshaped_data_train_edit = add_noise_to_hot(reshaped_data_train,
                                             upper_bound=upperbound)
@@ -140,10 +142,6 @@ def train_model(name, model, directory, args,
             real_vals_prop_train=prop_vals_train.detach().cpu().numpy()
             real_vals_prop_test=prop_vals_test.detach().cpu().numpy()
             curr_best_model = model.state_dict()
-            print('Real Property; Train Set', min(real_vals_prop_train), max(real_vals_prop_train))
-            print('Real Property; Test Set', min(real_vals_prop_test), max(real_vals_prop_test))
-            print('Calculated Property; Train Set', min(calc_train), max(calc_train))
-            print('Calculated Property; Test Set', min(calc_test), max(calc_test))
 
     plot_utils.prediction_loss(train_loss, test_loss, directory, run_number)
     plot_utils.test_model_after_train(calc_train, real_vals_prop_train,
@@ -162,7 +160,6 @@ def train_model(name, model, directory, args,
 
 def load_model(file_name, args, len_max_molec1Hot, model_parameters):
     """Load existing model state dict from file"""
-
     model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
     model.load_state_dict(torch.load(file_name))
     model.eval()
@@ -220,7 +217,7 @@ if __name__ == '__main__':
         data_loader.preprocess(num_mol, prop_name, file_name)
 
     data_train, data_test, prop_vals_train, prop_vals_test \
-        = data_loader.split_train_test(data, prop_vals, data_size, 0.85)
+        = data_loader.split_train_test(data, prop_vals, data_size, 0.75)
     
     args = use_gpu()
     num_epochs = settings['training']['num_epochs']

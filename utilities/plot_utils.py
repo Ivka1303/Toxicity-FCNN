@@ -28,10 +28,6 @@ def test_model_after_train(calc_train, real_vals_prop_train,
 
     plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set', alpha = 0.5, s=3)
     plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set', alpha = 0.5, s=3)
-    print('Real train', min(real_vals_prop_train), max(real_vals_prop_train))
-    print('Calc train', min(calc_train), max(calc_train))
-    print('Real test', min(real_vals_prop_test), max(real_vals_prop_test))
-    print('Calc train', min(calc_test), max(calc_test))
     plt.xlabel('Modelled ' + prop_name)
     plt.ylabel('True ' + prop_name)
     plt.title(f'Comparison of Modelled vs. True {prop_name}')
@@ -67,7 +63,6 @@ def scatter_residuals(calc_train, real_vals_prop_train,
                    directory, run_number, prop_name):
     """Scatter plot comparing residuals with the modelled data;
     includes both test and training data."""
-    
     # Calculate residuals
     residuals_train = real_vals_prop_train - calc_train
     residuals_test = real_vals_prop_test - calc_test
@@ -80,13 +75,6 @@ def scatter_residuals(calc_train, real_vals_prop_train,
     
     # For residuals, it's useful to have a horizontal line at y=0 to indicate where residuals would be zero
     plt.axhline(0, color='black', linewidth=0.5, linestyle='--')
-
-    print("Modelled train:", min(calc_train), max(calc_train))
-    print("Real train:", min(real_vals_prop_train), max(real_vals_prop_train))
-    print("Modelled test:", min(calc_test), max(calc_test))
-    print("Real test:", min(real_vals_prop_test), max(real_vals_prop_test))
-    print("Residuals train:", min(residuals_train), max(residuals_train))
-    print("Residuals test:",  min(residuals_test), max(residuals_test))
     
     plt.xlabel('Modelled ' + prop_name)
     plt.ylabel('Residuals')
@@ -107,14 +95,6 @@ def plot_residuals_histogram(calc_train, real_vals_prop_train,
     # Calculate residuals
     residuals_train = real_vals_prop_train - calc_train
     residuals_test = real_vals_prop_test - calc_test
-    
-    print("Modelled train:", min(calc_train), max(calc_train))
-    print("Real train:", min(real_vals_prop_train), max(real_vals_prop_train))
-    print("Modelled test:", min(calc_test), max(calc_test))
-    print("Real test:", min(real_vals_prop_test), max(real_vals_prop_test))
-    print("Residuals train:", min(residuals_train), max(residuals_train))
-    print("Residuals test:",  min(residuals_test), max(residuals_test))
-
     plt.figure()
 
     # Plot histograms

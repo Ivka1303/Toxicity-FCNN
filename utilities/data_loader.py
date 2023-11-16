@@ -15,7 +15,13 @@ import logging
 
 
 def write_lengths_to_file(filename, smiles_len, selfies_len):
-    """Utility function to write the largest SMILES and SELFIES lengths to a file."""
+    """
+    Writes the maximum lengths of SMILES (1st line) and SELFIES (2nd line) strings to a specified file.
+    Parameters:
+    - filename (str): Path to the output file.
+    - smiles_len (int): Maximum length of SMILES strings.
+    - selfies_len (int): Maximum length of SELFIES strings.
+    """
     with open(filename, "w+") as f:
         f.write(f"{smiles_len}\n")
         f.write(f"{selfies_len}\n")
@@ -127,23 +133,19 @@ def get_selfie_and_smiles_info(selfies_list, smiles_list, prop_name, filename):
 
 def get_selfie_and_smiles_encodings(smiles_list, nrows=0):
     """
-    Returns encoding of largest molecule in
-    SMILES and SELFIES, given a list of SMILES molecules.
-    input:
-        - list of SMILES
-        - number of rows to be read.
-    output:
-        - selfies encoding
-        - smiles encoding
+    Given a list of SMILES strings representing molecules, this function returns the encodings for 
+    nrows SELFIES and SMILES.
+    Parameters:
+    - smiles_list (list of str): A list containing SMILES strings of molecules.
+    - nrows (int, optional): The number of SMILES strings to process. If 0, all entries in `smiles_list` are processed. Defaults to 0.
+    Returns:
+    tuple: A pair where the first element is a list of SELFIES encodings and the second element is the processed list of SMILES strings.
     """
-
     if nrows:
         smiles_list = np.random.choice(smiles_list, nrows, replace=False)
     print('--> Translating SMILES to SELFIES...')
     selfies_list = list(map(sf.encoder, smiles_list))
-
     print('Finished translating SMILES to SELFIES.')
-
     return selfies_list, smiles_list
 
 
@@ -153,9 +155,9 @@ def read_data(prop_name, filename):
 
     df = pd.read_csv(filename)
     smiles_list = np.asanyarray(df['SMILES'])
-    print('SMILES read', smiles_list[:10])
+    print('SMILES read')
     prop_list = np.asanyarray(df[prop_name])
-    print(f'{prop_name} read', smiles_list[:10])
+    print(f'{prop_name} read',)
     return smiles_list, prop_list
 
 
@@ -167,7 +169,6 @@ def preprocess(num_mol, prop_name, file_name):
     smiles_list, prop = read_data(prop_name, file_name)
     scaler = MinMaxScaler()
     prop_list = scaler.fit_transform(prop.reshape(-1, 1)).flatten()
-    print('BRUH', min(prop_list), max(prop_list))
     print('Translating SMILES to SELFIES...')
     selfies_list, smiles_list = get_selfie_and_smiles_encodings(smiles_list, num_mol)
     print('Finished reading SMILES data.\n')
