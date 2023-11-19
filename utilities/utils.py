@@ -8,8 +8,14 @@ import torch
 import argparse
 
 def change_str(name):
-    """Remove spaces, commas, semicolons, periods, brackets from given string
-    and replace them with an underscore."""
+    """
+    Replaces specific characters in a string (spaces, commas, semicolons, periods, and brackets) 
+    with an underscore, and removes apostrophes.
+    Parameters:
+    - name (str): The string to be modified.
+    Returns:
+    str: The modified string with replaced and removed characters.
+    """
     changed = ''
     for i in range(len(name)):
         if name[i]=='{' or name[i]=='}' or name[i]=='.' or name[i]==':' \
@@ -23,13 +29,21 @@ def change_str(name):
 
 
 def make_dir(name):
-    """Create a new directory."""
+    """
+    Creates a new directory with the given name if it does not already exist.
+    Parameters:
+    - name (str): The name of the directory to be created.
+    """
     if not os.path.exists(name):
         os.makedirs(name)
 
 
 def use_gpu():
-    """Connects training to gpu resources via args."""
+    """
+    Configures the training to use GPU resources if available and not disabled.
+    Returns:
+    argparse.Namespace: A namespace object containing the device configuration.
+    """
     # if the system supports CUDA, utilize it for faster computation.
     parser = argparse.ArgumentParser(description='Set device')
     parser.add_argument('--disable-cuda', action='store_true',

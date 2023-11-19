@@ -210,7 +210,7 @@ if __name__ == '__main__':
 
     num_mol = data_size
     file_name = settings['data_preprocess']['smiles_file']
-    prop_name = file_name[9:-4]
+    prop_name = file_name[14:-4]
 
     # data-preprocessing
     data, prop_vals, alphabet, len_max_molec1Hot, largest_molecule_len, scaler = \

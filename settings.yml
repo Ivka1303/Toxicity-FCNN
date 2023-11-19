@@ -1,10 +1,9 @@
-mols: ['O1C=CN=C1-C']
 upperbound_tr: 0.05
 lr_train: 1e-4
 use_existent: True
 
 data_preprocess:
-  smiles_file: datasets/LogS.csv
+  smiles_file: datasets/logS/LogS.csv
 
 data:
   data_size: 4800
@@ -19,4 +18,4 @@ model:
 
 training:
   num_epochs: 20
-  batch_size: 50 #to make it faster you could increase this one (but you can get stuck in local minima)
+  batch_size: 50 

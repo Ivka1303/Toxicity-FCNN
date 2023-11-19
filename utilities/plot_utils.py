@@ -8,9 +8,16 @@ from sklearn.metrics import mean_squared_error, r2_score
 def test_model_after_train(calc_train, real_vals_prop_train,
                calc_test, real_vals_prop_test,
                directory, run_number, prop_name, scaler):
-    """Scatter plot comparing ground truth data with the modelled data;
-    includes both test and training data."""
-
+    """
+    Generates scatter plots comparing model predictions to true property values for both training and test datasets.
+    Parameters:
+    - calc_train, real_vals_prop_train (arrays): Model predictions and true values for training set.
+    - calc_test, real_vals_prop_test (arrays): Model predictions and true values for test set.
+    - directory (str): Directory path to save plot.
+    - run_number (int): Run identifier.
+    - prop_name (str): Name of the property being modeled.
+    - scaler (scaler object): Scaler used for data normalization.
+    """
     # Inverse transform the calculated and real property values
     calc_train = scaler.inverse_transform(calc_train.reshape(-1, 1)).flatten()
     real_vals_prop_train = scaler.inverse_transform(real_vals_prop_train.reshape(-1, 1)).flatten()
@@ -20,12 +27,10 @@ def test_model_after_train(calc_train, real_vals_prop_train,
     # Calculate R^2 and RMSE for train and test data
     r2_train = r2_score(real_vals_prop_train, calc_train)
     rmse_train = mean_squared_error(real_vals_prop_train, calc_train, squared=False)
-
     r2_test = r2_score(real_vals_prop_test, calc_test)
     rmse_test = mean_squared_error(real_vals_prop_test, calc_test, squared=False)
-
+    
     plt.figure()
-
     plt.scatter(calc_train, real_vals_prop_train, color='tab:blue', label='Train set', alpha = 0.5, s=3)
     plt.scatter(calc_test, real_vals_prop_test, color='tab:purple', label='Test set', alpha = 0.5, s=3)
     plt.xlabel('Modelled ' + prop_name)
@@ -43,7 +48,13 @@ def test_model_after_train(calc_train, real_vals_prop_train,
 
 
 def prediction_loss(train_loss, test_loss, directory, run_number):
-    """Plot prediction loss during training of model"""
+    """
+    Plots the training and test loss over epochs during model training.
+    Parameters:
+    - train_loss, test_loss (lists): Lists of training and test losses per epoch.
+    - directory (str): Directory path to save plot.
+    - run_number (int): Run identifier.
+    """
     print(len(train_loss), train_loss)
     print(len(test_loss), test_loss)
     plt.figure()
@@ -61,8 +72,15 @@ def prediction_loss(train_loss, test_loss, directory, run_number):
 def scatter_residuals(calc_train, real_vals_prop_train,
                    calc_test, real_vals_prop_test,
                    directory, run_number, prop_name):
-    """Scatter plot comparing residuals with the modelled data;
-    includes both test and training data."""
+    """
+    Creates scatter plots of residuals (differences between predicted and true values) for both training and test datasets.
+    Parameters:
+    - calc_train, real_vals_prop_train (arrays): Predicted and true values for training set.
+    - calc_test, real_vals_prop_test (arrays): Predicted and true values for test set.
+    - directory (str): Directory path to save plot.
+    - run_number (int): Run identifier.
+    - prop_name (str): Name of the property being modeled.
+    """
     # Calculate residuals
     residuals_train = real_vals_prop_train - calc_train
     residuals_test = real_vals_prop_test - calc_test
@@ -89,9 +107,15 @@ def scatter_residuals(calc_train, real_vals_prop_train,
 def plot_residuals_histogram(calc_train, real_vals_prop_train,
                              calc_test, real_vals_prop_test,
                              directory, run_number, prop_name):
-    """Histogram plot of residuals;
-    includes both test and training data."""
-
+    """
+    Plots histograms of residuals for both training and test datasets.
+    Parameters:
+    - calc_train, real_vals_prop_train (arrays): Predicted and true values for training set.
+    - calc_test, real_vals_prop_test (arrays): Predicted and true values for test set.
+    - directory (str): Directory path to save plot.
+    - run_number (int): Run identifier.
+    - prop_name (str): Name of the property being modeled.
+    """
     # Calculate residuals
     residuals_train = real_vals_prop_train - calc_train
     residuals_test = real_vals_prop_test - calc_test
@@ -114,21 +138,13 @@ def plot_residuals_histogram(calc_train, real_vals_prop_train,
     plt.close()
 
 
-def initial_histogram(prop_dream, directory,
-                      dataset_name='QM9', prop_name='LC50'):
-    """Plot distribution of property values from a given list of values"""
-
-    plt.figure()
-    plt.hist(prop_dream, density=True, bins=30)
-    plt.ylabel(prop_name + ' - ' + dataset_name)
-    name = directory + '/QM9_histogram'
-    plt.savefig(name)
-    plt.close()
-
-
 def running_avg_test_loss(avg_test_loss, directory):
-    """Plot running average test loss"""
-
+    """
+    Plots the running average of the test loss over epochs.
+    Parameters:
+    - avg_test_loss (list): List of average test losses per epoch.
+    - directory (str): Directory path to save plot.
+    """
     plt.figure()
     plt.plot(avg_test_loss)
     plt.xlabel('Epochs')
