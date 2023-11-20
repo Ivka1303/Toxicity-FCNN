@@ -3,7 +3,7 @@ lr_train: 1e-4
 use_existent: True
 
 data_preprocess:
-  smiles_file: datasets/logS/LogS.csv
+  smiles_file: datasets/LC50/LC50[-LOG(mol_L)].csv
 
 data:
   data_size: 4800

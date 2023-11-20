@@ -1,7 +1,3 @@
-"""
-Test molecules on Pasithea. Visualize molecular transformations.
-"""
-
 import torch
 import yaml
 import numpy as np
@@ -19,11 +15,23 @@ from utilities.utils import make_dir, change_str, use_gpu
 
 
 class fc_model(nn.Module):
+    """
+    Fully Connected Neural Network model class for molecular property prediction.
+    """
     def __init__(self, len_max_molec1Hot, alphabet_size, 
                  num_of_neurons_layer1, num_of_neurons_layer2, 
                  num_of_neurons_layer3, batch_first=True):
         """
-        Fully Connected layers of the RNN.
+        Initializes the fully connected model.
+        Parameters:
+        - len_max_molec1Hot (int): Maximum length of one-hot encoded molecule.
+        - alphabet_size (int): Size of the alphabet for molecule encoding.
+        - num_of_neurons_layer1 (int): Number of neurons in the first layer.
+        - num_of_neurons_layer2 (int): Number of neurons in the second layer.
+        - num_of_neurons_layer3 (int): Number of neurons in the third layer.
+        - batch_first (bool): If True, the first dimension is the batch size.
+        Note: there can be more options for num_of_neurons_layerx added in settings.yml. 
+        You can also increase/decrease the number of layers in the function here.
         """
         super(fc_model, self).__init__()
 
@@ -40,8 +48,11 @@ class fc_model(nn.Module):
 
     def forward(self, x):
         """
-        Pass through the model (is implicictely called when model is created)
-        x - data
+        Forward pass through the model (Note: it's implicictely called when model is created)
+        Parameters:
+        - x (torch.Tensor): Input data tensor.
+        Returns:
+        torch.Tensor: Output of the model.
         """
         h1 = self.encode_1d(x)
         return h1
@@ -50,8 +61,25 @@ class fc_model(nn.Module):
 def train_model(name, model, directory, args,
                 upperbound, prop_name, data_train, prop_vals_train, data_test,
                 prop_vals_test, lr_enc, num_epochs, batch_size, run_number, scaler):
-    """Train the model"""
-
+    """
+    Train the model with the given data.
+    Parameters:
+    - name (str): Name of the model for saving.
+    - model (nn.Module): Model to be trained.
+    - directory (str): Directory to save outputs.
+    - args: Model and training arguments.
+    - upperbound (float): Upper bound for adding noise.
+    - prop_name (str): Name of the property being predicted.
+    - data_train (array): Training data.
+    - prop_vals_train (array): Training property values.
+    - data_test (array): Testing data.
+    - prop_vals_test (array): Testing property values.
+    - lr_enc (float): Learning rate for the encoder.
+    - num_epochs (int): Number of training epochs.
+    - batch_size (int): Size of each training batch.
+    - run_number (int): Identifier for the training run.
+    - scaler: Scaler object for data normalization.
+    """
     # initialize an instance of the model
     optimizer_encoder = torch.optim.Adam(model.parameters(), lr=lr_enc, weight_decay = 1e-5) #l2-regularization
 
@@ -159,7 +187,16 @@ def train_model(name, model, directory, args,
         
 
 def load_model(file_name, args, len_max_molec1Hot, model_parameters):
-    """Load existing model state dict from file"""
+    """
+    Load a pre-trained model.
+    Parameters:
+    - file_name (str): Path to the model file.
+    - args: Model and training arguments.
+    - len_max_molec1Hot (int): Maximum length of one-hot encoded molecule.
+    - model_parameters (dict): Parameters for the model.
+    Returns:
+    nn.Module: Loaded model.
+    """
     model = fc_model(len_max_molec1Hot, **model_parameters).to(device=args.device)
     model.load_state_dict(torch.load(file_name))
     model.eval()
@@ -169,6 +206,26 @@ def load_model(file_name, args, len_max_molec1Hot, model_parameters):
 def train(directory, args, model_parameters, len_max_molec1Hot, upperbound,
           data_train, prop_vals_train, data_test, prop_vals_test, lr_train,
           num_epochs, batch_size, scaler, alphabet_size):
+    """
+    High-level function to handle the training process.
+    Parameters:
+    - directory (str): Directory for saving outputs.
+    - args: Model and training arguments.
+    - model_parameters (dict): Parameters for the model.
+    - len_max_molec1Hot (int): Maximum length of one-hot encoded molecule.
+    - upperbound (float): Upper bound for adding noise.
+    - data_train (array): Training data.
+    - prop_vals_train (array): Training property values.
+    - data_test (array): Testing data.
+    - prop_vals_test (array): Testing property values.
+    - lr_train (float): Learning rate for training.
+    - num_epochs (int): Number of training epochs.
+    - batch_size (int): Size of each training batch.
+    - scaler: Scaler object for data normalization.
+    - alphabet_size (int): Size of the alphabet for molecule encoding.
+    Returns:
+        nn.Module: The trained model.
+    """
     print("start training")
     existing_files = os.listdir(directory)
     run_number = sum(1 for file in existing_files if file.endswith('.pt')) + 1
