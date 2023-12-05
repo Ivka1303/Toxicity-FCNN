@@ -14,7 +14,7 @@ from random import shuffle
 from utilities import data_loader
 from utilities import plot_utils
 
-from utilities.mol_utils import add_noise_to_unflattened
+from utilities.mol_utils import add_noise_for_lstm
 from utilities.utils import make_dir, change_str, use_gpu
 
 # Set random seed for reproducibility
@@ -105,7 +105,7 @@ def train_model(name, model, directory, args,
     prop_vals_test = torch.tensor(prop_vals_test, dtype=torch.float, device=args.device)
 
     # Add random noise to one-hot encoding for test data
-    data_test_edit = add_noise_to_unflattened(data_test, upperbound)  # Assuming this function can handle 3D tensors
+    data_test_edit = add_noise_for_lstm(data_test, upperbound)  # Assuming this function can handle 3D tensors
 
     test_loss = []
     train_loss = []
@@ -118,7 +118,7 @@ def train_model(name, model, directory, args,
         data_train = data_train[x]
         prop_vals_train = prop_vals_train[x]
 
-        data_train_edit = add_noise_to_unflattened(data_train, upper_bound=upperbound)  # Assuming this function can handle 3D tensors
+        data_train_edit = add_noise_for_lstm(data_train, upper_bound=upperbound)  # Assuming this function can handle 3D tensors
 
         for batch_iteration in range(int(len(data_train_edit) / batch_size)):
             current_smiles_start, current_smiles_stop = batch_iteration * batch_size, (batch_iteration + 1) * batch_size

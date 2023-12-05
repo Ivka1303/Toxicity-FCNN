@@ -112,10 +112,12 @@ def add_noise_to_hot(hot, upper_bound):
     Returns:
     array: The modified array with added noise.
     """
-    return hot+upper_bound*rand(hot.shape) 
+    newhot = hot+upper_bound*rand(hot.shape) 
+    newhot[newhot>1]=1
+    return newhot
 
 
-def add_noise_to_unflattened(hot, upper_bound): 
+def add_noise_for_lstm(hot, upper_bound): 
     """
     Adds random noise to a tensor by replacing zero elements with random floats in the range [0, upper_bound].
     Parameters:

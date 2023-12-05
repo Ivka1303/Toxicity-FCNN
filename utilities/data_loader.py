@@ -209,7 +209,7 @@ def preprocess(num_mol, prop_name, file_name):
     - file_name (str): Name of the file containing the dataset.
     Returns:
     tuple: A tuple containing the one-hot encoded SELFIES, normalized property values, alphabet used for encoding,
-           flattened length of the one-hot encoded molecules, length of the largest molecule, and the scaler used for normalization.
+           total size of the one-hot encoding for the largest molecule, length of the largest molecule in SELFIES format, and the scaler object used for normalization.
     """
     print(f'Loading SMILES and {prop_name} data...')
     smiles_list, prop = read_data(prop_name, file_name)
