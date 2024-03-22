@@ -1,4 +1,4 @@
 cd C:\Users\kresh\.vscode\projects                                 
 conda activate chemprop    
-chemprop_train --data_path ".\RNN4Molecules\Toxicity-RNN\chemprop\LogS\LogS(train).csv" --dataset_type regression --save_dir ".\RNN4Molecules\Toxicity-RNN\chemprop\LogS"                                                    
-chemprop_predict --test_path ".\RNN4Molecules\Toxicity-RNN\chemprop\LogS\LogS(test).csv" --checkpoint_dir .\RNN4Molecules\Toxicity-RNN\chemprop\LogS\fold_0\model_0 --preds_path ".\chemprop_pred.csv"
+chemprop_train --data_path ".\FCNN4Molecules\Toxicity-FCNN\chemprop\LogS\LogS(train).csv" --dataset_type regression --save_dir ".\FCNN4Molecules\Toxicity-FCNN\chemprop\LogS"                                                    
+chemprop_predict --test_path ".\FCNN4Molecules\Toxicity-FCNN\chemprop\LogS\LogS(test).csv" --checkpoint_dir .\FCNN4Molecules\Toxicity-FCNN\chemprop\LogS\fold_0\model_0 --preds_path ".\chemprop_pred.csv"

@@ -1,5 +1,5 @@
 Command line
-python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\RNN4Molecules\Toxicity-RNN\datasets\Sol[-LOG(mol_L)].csv --dataset_type regression --save_dir .\RNN4Molecules\Toxicity-RNN
+python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\FCNN4Molecules\Toxicity-FCNN\datasets\Sol[-LOG(mol_L)].csv --dataset_type regression --save_dir .\FCNN4Molecules\Toxicity-FCNN
 Args
 {'activation': 'ReLU',
  'adding_bond_types': True,
@@ -36,7 +36,7 @@ Args
  'crossval_index_file': None,
  'crossval_index_sets': None,
  'cuda': False,
- 'data_path': '.\\RNN4Molecules\\Toxicity-RNN\\datasets\\Sol[-LOG(mol_L)].csv',
+ 'data_path': '.\\FCNN4Molecules\\Toxicity-FCNN\\datasets\\Sol[-LOG(mol_L)].csv',
  'data_weights_path': None,
  'dataset_type': 'regression',
  'depth': 3,
@@ -98,7 +98,7 @@ Args
  'reaction_mode': 'reac_diff',
  'reaction_solvent': False,
  'resume_experiment': False,
- 'save_dir': '.\\RNN4Molecules\\Toxicity-RNN',
+ 'save_dir': '.\\FCNN4Molecules\\Toxicity-FCNN',
  'save_preds': False,
  'save_smiles_splits': False,
  'seed': 0,
@@ -281,7 +281,7 @@ Ensemble test rmse = 0.701142
 Overall test rmse = 0.701142 +/- 0.000000
 Elapsed time = 0:01:02
 Command line
-python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\RNN4Molecules\Toxicity-RNN\LogSa.csv --dataset_type regression --save_dir .\RNN4Molecules\Toxicity-RNN
+python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\FCNN4Molecules\Toxicity-FCNN\LogSa.csv --dataset_type regression --save_dir .\FCNN4Molecules\Toxicity-FCNN
 Args
 {'activation': 'ReLU',
  'adding_bond_types': True,
@@ -318,7 +318,7 @@ Args
  'crossval_index_file': None,
  'crossval_index_sets': None,
  'cuda': False,
- 'data_path': '.\\RNN4Molecules\\Toxicity-RNN\\LogSa.csv',
+ 'data_path': '.\\FCNN4Molecules\\Toxicity-FCNN\\LogSa.csv',
  'data_weights_path': None,
  'dataset_type': 'regression',
  'depth': 3,
@@ -380,7 +380,7 @@ Args
  'reaction_mode': 'reac_diff',
  'reaction_solvent': False,
  'resume_experiment': False,
- 'save_dir': '.\\RNN4Molecules\\Toxicity-RNN',
+ 'save_dir': '.\\FCNN4Molecules\\Toxicity-FCNN',
  'save_preds': False,
  'save_smiles_splits': False,
  'seed': 0,

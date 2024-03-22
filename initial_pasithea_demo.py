@@ -23,7 +23,7 @@ class fc_model(nn.Module):
                  num_of_neurons_layer1, num_of_neurons_layer2, 
                  num_of_neurons_layer3, batch_first=True):
         """
-        Fully Connected layers of the RNN.
+        Fully Connected layers of the NN.
         """
         super(fc_model, self).__init__()
 

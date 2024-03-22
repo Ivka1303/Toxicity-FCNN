@@ -34,7 +34,7 @@
     "crossval_index_file": null,
     "crossval_index_sets": null,
     "cuda": false,
-    "data_path": ".\\RNN4Molecules\\Toxicity-RNN\\LogSa.csv",
+    "data_path": ".\\FCNN4Molecules\\Toxicity-FCNN\\LogSa.csv",
     "data_weights_path": null,
     "dataset_type": "regression",
     "depth": 3,
@@ -101,11 +101,11 @@
     "reaction_mode": "reac_diff",
     "reaction_solvent": false,
     "reproducibility": {
-        "command_line": "python 'C:\\Users\\kresh\\anaconda3\\envs\\chemprop\\Scripts\\chemprop_train' --data_path '.\\RNN4Molecules\\Toxicity-RNN\\LogSa.csv' --dataset_type regression --save_dir '.\\RNN4Molecules\\Toxicity-RNN'",
+        "command_line": "python 'C:\\Users\\kresh\\anaconda3\\envs\\chemprop\\Scripts\\chemprop_train' --data_path '.\\FCNN4Molecules\\Toxicity-FCNN\\LogSa.csv' --dataset_type regression --save_dir '.\\FCNN4Molecules\\Toxicity-FCNN'",
         "time": "Mon Nov 13 15:41:44 2023"
     },
     "resume_experiment": false,
-    "save_dir": ".\\RNN4Molecules\\Toxicity-RNN",
+    "save_dir": ".\\FCNN4Molecules\\Toxicity-FCNN",
     "save_preds": false,
     "save_smiles_splits": false,
     "seed": 0,

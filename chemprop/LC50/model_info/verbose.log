@@ -1,5 +1,5 @@
 Command line
-python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\RNN4Molecules\Toxicity-RNN\chemprop\LC50\LC50(train).csv --dataset_type regression --save_dir .\RNN4Molecules\Toxicity-RNN\chemprop\LC50
+python C:\Users\kresh\anaconda3\envs\chemprop\Scripts\chemprop_train --data_path .\FCNN4Molecules\Toxicity-FCNN\chemprop\LC50\LC50(train).csv --dataset_type regression --save_dir .\FCNN4Molecules\Toxicity-FCNN\chemprop\LC50
 Args
 {'activation': 'ReLU',
  'adding_bond_types': True,
@@ -36,7 +36,7 @@ Args
  'crossval_index_file': None,
  'crossval_index_sets': None,
  'cuda': False,
- 'data_path': '.\\RNN4Molecules\\Toxicity-RNN\\chemprop\\LC50\\LC50(train).csv',
+ 'data_path': '.\\FCNN4Molecules\\Toxicity-FCNN\\chemprop\\LC50\\LC50(train).csv',
  'data_weights_path': None,
  'dataset_type': 'regression',
  'depth': 3,
@@ -98,7 +98,7 @@ Args
  'reaction_mode': 'reac_diff',
  'reaction_solvent': False,
  'resume_experiment': False,
- 'save_dir': '.\\RNN4Molecules\\Toxicity-RNN\\chemprop\\LC50',
+ 'save_dir': '.\\FCNN4Molecules\\Toxicity-FCNN\\chemprop\\LC50',
  'save_preds': False,
  'save_smiles_splits': False,
  'seed': 0,
